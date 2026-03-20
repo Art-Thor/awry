@@ -1,4 +1,4 @@
-module github.com/artthor/awry
+module github.com/Art-Thor/awry
 
 go 1.23
 

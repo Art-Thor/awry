@@ -7,8 +7,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/artthor/awry/internal/awsconfig"
-	"github.com/artthor/awry/pkg/models"
+	"github.com/Art-Thor/awry/internal/awsconfig"
+	"github.com/Art-Thor/awry/pkg/models"
 )
 
 // Model is the top-level Bubble Tea model.

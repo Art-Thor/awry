@@ -6,7 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/artthor/awry/internal/ui"
+	"github.com/Art-Thor/awry/internal/ui"
 )
 
 // RunTUI launches the interactive profile picker and prints the export

@@ -8,7 +8,7 @@ import (
 
 	"github.com/go-ini/ini"
 
-	"github.com/artthor/awry/pkg/models"
+	"github.com/Art-Thor/awry/pkg/models"
 )
 
 // DefaultConfigPath returns the path to ~/.aws/config.

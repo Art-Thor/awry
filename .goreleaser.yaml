@@ -1,0 +1,49 @@
+version: 2
+
+project_name: awry
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - main: ./cmd/awry
+    binary: awry
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+brews:
+  - repository:
+      owner: Art-Thor
+      name: homebrew-tap
+    name: awry
+    homepage: https://github.com/Art-Thor/awry
+    description: Terminal-based AWS profile manager with a TUI
+    license: MIT
+    install: |
+      bin.install "awry"
+    test: |
+      system "#{bin}/awry", "--help"
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
