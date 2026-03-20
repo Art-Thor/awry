@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/artthor/awry/internal/app"
-	"github.com/artthor/awry/internal/awsconfig"
+	"github.com/Art-Thor/awry/internal/app"
+	"github.com/Art-Thor/awry/internal/awsconfig"
 )
 
 var rootCmd = &cobra.Command{
