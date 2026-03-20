@@ -28,6 +28,7 @@ brews:
   - repository:
       owner: Art-Thor
       name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     name: awry
     homepage: https://github.com/Art-Thor/awry
     description: Terminal-based AWS profile manager with a TUI
