@@ -37,11 +37,13 @@ func New() (Model, error) {
 		return Model{}, fmt.Errorf("loading profiles: %w", err)
 	}
 
-	return Model{
+	m := Model{
 		profiles:       profiles,
-		filtered:       profiles,
 		currentProfile: awsconfig.CurrentProfile(),
-	}, nil
+	}
+	m.pinActiveToTop()
+	m.filtered = m.profiles
+	return m, nil
 }
 
 func (m Model) Init() tea.Cmd {
@@ -132,6 +134,33 @@ func (m *Model) applyFilter() {
 	m.cursor = 0
 }
 
+// pinActiveToTop moves the active profile to the first position in the list.
+func (m *Model) pinActiveToTop() {
+	if m.currentProfile == "" {
+		return
+	}
+	for i, p := range m.profiles {
+		if p.Name == m.currentProfile && i > 0 {
+			m.profiles = append([]models.Profile{p}, append(m.profiles[:i], m.profiles[i+1:]...)...)
+			return
+		}
+	}
+}
+
+// inlineBadge returns the inline type badge string for a profile.
+func inlineBadge(t models.ProfileType) string {
+	switch t {
+	case models.ProfileTypeSSO:
+		return badgeInlineSSO.String()
+	case models.ProfileTypeRole:
+		return badgeInlineRole.String()
+	case models.ProfileTypeStatic:
+		return badgeInlineStatic.String()
+	default:
+		return badgeInlineUnknown.String()
+	}
+}
+
 // fuzzyMatch checks if all characters in query appear in order within s.
 func fuzzyMatch(s, query string) bool {
 	qi := 0
@@ -208,7 +237,7 @@ func (m Model) renderList(width int) string {
 
 	for i := start; i < end; i++ {
 		p := m.filtered[i]
-		name := p.Name
+		name := p.Name + inlineBadge(p.Type)
 
 		isActive := p.Name == m.currentProfile
 		if isActive {
@@ -226,6 +255,12 @@ func (m Model) renderList(width int) string {
 
 		b.WriteString(line)
 		b.WriteString("\n")
+
+		// Divider after the active profile (when pinned to top).
+		if isActive && i == 0 && len(m.filtered) > 1 && !m.searching {
+			b.WriteString(dividerStyle.Render("  ─────────────────────"))
+			b.WriteString("\n")
+		}
 	}
 
 	return b.String()

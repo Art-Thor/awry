@@ -90,4 +90,25 @@ var (
 	resultStyle = lipgloss.NewStyle().
 			Foreground(colorSuccess).
 			Bold(true)
+
+	// Inline badge styles for list panel
+	badgeInlineSSO = lipgloss.NewStyle().
+			Foreground(colorInfo).
+			SetString(" [SSO]")
+
+	badgeInlineRole = lipgloss.NewStyle().
+			Foreground(colorWarning).
+			SetString(" [ROLE]")
+
+	badgeInlineStatic = lipgloss.NewStyle().
+			Foreground(colorSuccess).
+			SetString(" [STATIC]")
+
+	badgeInlineUnknown = lipgloss.NewStyle().
+				Foreground(colorSecondary).
+				SetString(" [?]")
+
+	// Divider between active profile and the rest
+	dividerStyle = lipgloss.NewStyle().
+			Foreground(colorMuted)
 )

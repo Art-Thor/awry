@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -67,30 +66,23 @@ var exportCmd = &cobra.Command{
 			return fmt.Errorf("--profile flag is required")
 		}
 
-		// Validate that the profile exists.
+		// Validate that the profile exists using MatchProfile.
 		profiles, err := awsconfig.LoadProfiles()
 		if err != nil {
 			return err
 		}
 
-		var found bool
-		for _, p := range profiles {
-			if strings.EqualFold(p.Name, profile) {
-				found = true
-				profile = p.Name // use canonical casing
-				break
-			}
-		}
-		if !found {
-			return fmt.Errorf("profile %q not found", profile)
+		result, err := awsconfig.MatchProfile(profile, profiles)
+		if err != nil {
+			return err
 		}
 
-		fmt.Printf("export AWS_PROFILE=%s\n", profile)
+		fmt.Printf("export AWS_PROFILE=%s\n", result.Profile.Name)
 		return nil
 	},
 }
 
 func init() {
 	exportCmd.Flags().StringP("profile", "p", "", "Profile name to export")
-	rootCmd.AddCommand(listCmd, currentCmd, exportCmd)
+	rootCmd.AddCommand(listCmd, currentCmd, exportCmd, useCmd)
 }
