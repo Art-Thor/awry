@@ -49,8 +49,19 @@ func TestMatchProfile_Fuzzy(t *testing.T) {
 	}
 }
 
-func TestMatchProfile_Ambiguous(t *testing.T) {
+func TestMatchProfile_PrefixPreferredOverFuzzy(t *testing.T) {
 	profiles := testProfiles()
+	result, err := MatchProfile("produc", profiles)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if result.Profile.Name != "production" {
+		t.Errorf("expected production, got %s", result.Profile.Name)
+	}
+}
+
+func TestMatchProfile_Ambiguous(t *testing.T) {
+	profiles := append(testProfiles(), models.Profile{Name: "prod-admin"})
 	_, err := MatchProfile("prod", profiles)
 	if err == nil {
 		t.Fatal("expected error for ambiguous match")

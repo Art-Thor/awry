@@ -16,7 +16,8 @@ type MatchResult struct {
 // MatchProfile finds a profile by name using a cascading strategy:
 // 1. Exact match
 // 2. Case-insensitive match
-// 3. Fuzzy match (all query chars appear in order)
+// 3. Case-insensitive prefix match
+// 4. Fuzzy match (all query chars appear in order)
 // Returns an error with suggestions if no match or ambiguous.
 func MatchProfile(name string, profiles []models.Profile) (*MatchResult, error) {
 	if name == "" {
@@ -42,7 +43,19 @@ func MatchProfile(name string, profiles []models.Profile) (*MatchResult, error) 
 		return &MatchResult{Profile: &profiles[ciMatches[0]]}, nil
 	}
 
-	// 3. Fuzzy match.
+	// 3. Case-insensitive prefix match.
+	var prefixMatches []int
+	for i := range profiles {
+		if strings.HasPrefix(strings.ToLower(profiles[i].Name), lower) {
+			prefixMatches = append(prefixMatches, i)
+		}
+	}
+
+	if len(prefixMatches) == 1 {
+		return &MatchResult{Profile: &profiles[prefixMatches[0]]}, nil
+	}
+
+	// 4. Fuzzy match.
 	var fuzzyMatches []int
 	for i := range profiles {
 		if fuzzyContains(strings.ToLower(profiles[i].Name), lower) {
@@ -56,6 +69,9 @@ func MatchProfile(name string, profiles []models.Profile) (*MatchResult, error) 
 
 	// Ambiguous or not found — collect suggestions.
 	candidates := fuzzyMatches
+	if len(candidates) == 0 && len(prefixMatches) > 0 {
+		candidates = prefixMatches
+	}
 	if len(candidates) == 0 && len(ciMatches) > 0 {
 		candidates = ciMatches
 	}
