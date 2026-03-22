@@ -2,3 +2,4 @@
 /dist/
 *.exe
 .claude/
+AGENTS.md
