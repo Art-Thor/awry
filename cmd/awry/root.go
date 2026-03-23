@@ -12,17 +12,18 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "awry",
-	Short: "AWS profile manager with a TUI",
-	Long:  "awry is a terminal-based AWS profile manager that lets you browse, inspect, and switch AWS profiles.",
+	Use:          "awry",
+	Short:        "Browse AWS profiles and emit shell commands",
+	Long:         "awry is a terminal AWS profile manager that lets you browse profiles and emit shell commands to set AWS_PROFILE.",
+	SilenceUsage: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return app.RunTUI()
 	},
 }
 
 var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all AWS profiles",
+	Use:     "list",
+	Short:   "List all AWS profiles",
 	Aliases: []string{"ls"},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		profiles, err := awsconfig.LoadProfiles()
@@ -47,19 +48,20 @@ var listCmd = &cobra.Command{
 var currentCmd = &cobra.Command{
 	Use:   "current",
 	Short: "Print the currently active AWS profile",
-	Run: func(cmd *cobra.Command, args []string) {
-		c := awsconfig.CurrentProfile()
-		if c == "" {
-			fmt.Println("No active AWS profile set")
-			os.Exit(1)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		current, err := currentProfileOutput(awsconfig.CurrentProfile())
+		if err != nil {
+			return err
 		}
-		fmt.Println(c)
+
+		fmt.Println(current)
+		return nil
 	},
 }
 
 var exportCmd = &cobra.Command{
 	Use:   "export",
-	Short: "Print an export command for a profile",
+	Short: "Print shell code for a profile",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		profile, _ := cmd.Flags().GetString("profile")
 		if profile == "" {
@@ -77,12 +79,20 @@ var exportCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Printf("export AWS_PROFILE=%s\n", result.Profile.Name)
+		fmt.Println(app.ExportCommand(result.Profile.Name))
 		return nil
 	},
 }
 
+func currentProfileOutput(current string) (string, error) {
+	if current == "" {
+		return "", fmt.Errorf("no active AWS profile set")
+	}
+
+	return current, nil
+}
+
 func init() {
-	exportCmd.Flags().StringP("profile", "p", "", "Profile name to export")
+	exportCmd.Flags().StringP("profile", "p", "", "Profile name to emit as shell code")
 	rootCmd.AddCommand(listCmd, currentCmd, exportCmd, useCmd)
 }
