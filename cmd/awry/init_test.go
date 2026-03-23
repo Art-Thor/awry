@@ -103,15 +103,19 @@ func TestShellSetupLine(t *testing.T) {
 }
 
 func TestInstallShellSetup(t *testing.T) {
-	t.Run("creates config entry", func(t *testing.T) {
-		rcPath := filepath.Join(t.TempDir(), ".zshrc")
+	t.Run("creates zsh config entry", func(t *testing.T) {
+		homeDir := t.TempDir()
+		rcPath := filepath.Join(homeDir, ".zshrc")
 
-		alreadyInstalled, err := installShellSetup(rcPath, "zsh")
+		result, err := installShellSetup(homeDir, "zsh")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if alreadyInstalled {
+		if result.AlreadyInstalled {
 			t.Fatal("expected fresh install")
+		}
+		if result.PrimaryPath != rcPath {
+			t.Fatalf("unexpected primary path: %q", result.PrimaryPath)
 		}
 
 		content, err := os.ReadFile(rcPath)
@@ -128,17 +132,40 @@ func TestInstallShellSetup(t *testing.T) {
 		}
 	})
 
+	t.Run("creates bash config and loader", func(t *testing.T) {
+		homeDir := t.TempDir()
+		rcPath := filepath.Join(homeDir, ".bashrc")
+		profilePath := filepath.Join(homeDir, ".bash_profile")
+
+		result, err := installShellSetup(homeDir, "bash")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if result.PrimaryPath != rcPath {
+			t.Fatalf("unexpected primary path: %q", result.PrimaryPath)
+		}
+
+		profileContent, err := os.ReadFile(profilePath)
+		if err != nil {
+			t.Fatalf("reading bash profile: %v", err)
+		}
+		if !strings.Contains(string(profileContent), "if [ -f ~/.bashrc ]; then . ~/.bashrc; fi") {
+			t.Fatalf("expected bash profile loader in %q", string(profileContent))
+		}
+	})
+
 	t.Run("does not duplicate config entry", func(t *testing.T) {
-		rcPath := filepath.Join(t.TempDir(), ".bashrc")
+		homeDir := t.TempDir()
+		rcPath := filepath.Join(homeDir, ".bashrc")
 		if err := os.WriteFile(rcPath, []byte(shellSetupLine("bash")+"\n"), 0o644); err != nil {
 			t.Fatalf("writing rc file: %v", err)
 		}
 
-		alreadyInstalled, err := installShellSetup(rcPath, "bash")
+		result, err := installShellSetup(homeDir, "bash")
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
-		if !alreadyInstalled {
+		if !result.AlreadyInstalled {
 			t.Fatal("expected existing install to be detected")
 		}
 	})
