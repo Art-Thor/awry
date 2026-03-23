@@ -2,7 +2,7 @@
 
 A terminal-based AWS profile manager with a clean TUI interface.
 
-Browse, inspect, and emit shell commands for AWS profiles without leaving your terminal.
+Browse, inspect, and switch AWS profiles without leaving your terminal.
 
 ![Go](https://img.shields.io/badge/Go-1.23+-00ADD8?logo=go&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-blue)
@@ -15,7 +15,7 @@ Browse, inspect, and emit shell commands for AWS profiles without leaving your t
 - **Profile type detection** — identifies SSO, Role, and Static credential profiles
 - **Fuzzy search** — press `/` to filter profiles by name
 - **Active profile highlight** — shows which profile is currently set
-- **Shell integration** — select a profile and emit an `export` command ready for `eval`
+- **Shell integration** — install a shell wrapper so `awry` updates your current shell
 
 ## Install
 
@@ -42,10 +42,15 @@ make build
 ## Usage
 
 ```bash
-# Interactive selection and apply in one shot
-eval "$(awry)"
+# One-time setup for zsh
+echo 'eval "$(command awry init zsh)"' >> ~/.zshrc
+source ~/.zshrc
 
-# Launch the TUI without applying the result
+# One-time setup for bash
+echo 'eval "$(command awry init bash)"' >> ~/.bashrc
+source ~/.bashrc
+
+# Interactive selection and apply in one shot after setup
 awry
 
 # List all profiles
@@ -54,11 +59,8 @@ awry list
 # Show current profile
 awry current
 
-# Print shell code for a profile
+# Switch directly to a specific profile
 awry use my-profile
-
-# Apply a specific profile in one shot
-eval "$(awry use my-profile)"
 ```
 
 ## TUI Keybindings
@@ -66,22 +68,38 @@ eval "$(awry use my-profile)"
 | Key | Action |
 |-----|--------|
 | `↑` `↓` / `j` `k` | Navigate profiles |
-| `Enter` | Emit shell command |
+| `Enter` | Select profile |
 | `/` | Fuzzy search |
 | `Esc` | Clear search |
 | `q` | Quit |
 
 ## How It Works
 
-awry reads your AWS configuration from `~/.aws/config` and `~/.aws/credentials`, merges them, and presents a unified view. When you select a profile, it outputs:
+awry reads your AWS configuration from `~/.aws/config` and `~/.aws/credentials`, merges them, and presents a unified view.
+
+To let `awry` actually change your current shell, install the wrapper once:
+
+```bash
+eval "$(command awry init zsh)"
+```
+
+or:
+
+```bash
+eval "$(command awry init bash)"
+```
+
+That defines a shell function named `awry` which calls the real binary and automatically evaluates the emitted export command for `awry` and `awry use ...`.
+
+Use `command awry ...` if you ever want to bypass the wrapper and call the underlying binary directly.
+
+Under the hood, the binary still emits:
 
 ```bash
 export AWS_PROFILE='your-profile'
 ```
 
-Wrap it with `eval` to apply the switch to your current shell session.
-
-Important: `awry` cannot modify the parent shell by itself. Running `awry` directly lets you browse and prints shell code, but your shell only changes when you use `eval "$(awry)"` or `eval "$(awry use <profile>)"`.
+Without the wrapper, a standalone binary cannot modify the parent shell, so use `eval "$(awry)"` or `eval "$(awry use <profile>)"` directly.
 
 For role profiles, `awry` only sets `AWS_PROFILE`. The actual assume-role or SSO resolution still happens later in the AWS CLI or SDK.
 
@@ -96,12 +114,16 @@ awry respects these environment variables:
 | `AWS_PROFILE` | Currently active profile |
 | `AWS_DEFAULT_PROFILE` | Fallback active profile |
 
-## Shell Alias
+## Shell Setup
 
-Add to your `~/.bashrc` or `~/.zshrc` for quick profile switching:
+Add one of these lines to your shell config for persistent setup:
 
 ```bash
-alias ap='eval "$(awry)"'
+eval "$(command awry init zsh)"
+```
+
+```bash
+eval "$(command awry init bash)"
 ```
 
 ## License
