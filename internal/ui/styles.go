@@ -101,8 +101,8 @@ var (
 			SetString(" [ROLE]")
 
 	badgeInlineStatic = lipgloss.NewStyle().
-			Foreground(colorSuccess).
-			SetString(" [STATIC]")
+				Foreground(colorSuccess).
+				SetString(" [STATIC]")
 
 	badgeInlineUnknown = lipgloss.NewStyle().
 				Foreground(colorSecondary).

@@ -5,6 +5,8 @@ project_name: awry
 before:
   hooks:
     - go mod tidy
+    - go test ./...
+    - go vet ./...
 
 builds:
   - main: ./cmd/awry

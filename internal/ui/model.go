@@ -13,16 +13,16 @@ import (
 
 // Model is the top-level Bubble Tea model.
 type Model struct {
-	profiles        []models.Profile
-	filtered        []models.Profile
-	cursor          int
-	currentProfile  string
-	searchQuery     string
-	searching       bool
-	selected        *models.Profile
-	width           int
-	height          int
-	quitting        bool
+	profiles       []models.Profile
+	filtered       []models.Profile
+	cursor         int
+	currentProfile string
+	searchQuery    string
+	searching      bool
+	selected       *models.Profile
+	width          int
+	height         int
+	quitting       bool
 }
 
 // SelectedProfile returns the profile the user chose (nil if none).
@@ -334,7 +334,7 @@ func (m Model) renderStatusBar() string {
 	if m.searching {
 		parts = append(parts, "Esc close search", "Enter confirm")
 	} else {
-		parts = append(parts, "↑↓/jk navigate", "Enter select", "/ search", "q quit")
+		parts = append(parts, "↑↓/jk navigate", "Enter emit command", "/ search", "q quit")
 	}
 	return statusBarStyle.Render(strings.Join(parts, "  │  "))
 }

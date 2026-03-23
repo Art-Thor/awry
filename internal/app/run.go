@@ -17,7 +17,7 @@ func RunTUI() error {
 		return err
 	}
 
-	p := tea.NewProgram(m, tea.WithAltScreen())
+	p := tea.NewProgram(m, tea.WithAltScreen(), tea.WithOutput(os.Stderr))
 	result, err := p.Run()
 	if err != nil {
 		return fmt.Errorf("running TUI: %w", err)
@@ -25,9 +25,22 @@ func RunTUI() error {
 
 	final := result.(ui.Model)
 	if sel := final.SelectedProfile(); sel != nil {
-		fmt.Fprintf(os.Stderr, "\n  Selected: %s\n\n", sel.Name)
-		fmt.Printf("export AWS_PROFILE=%s\n", sel.Name)
+		if stdoutIsTerminal() {
+			fmt.Fprintf(os.Stderr, "\nSelected: %s\nTo apply it in your current shell, run:\n  eval \"$(awry)\"\n\n", sel.Name)
+		} else {
+			fmt.Fprintf(os.Stderr, "\nSelected: %s\n\n", sel.Name)
+		}
+		fmt.Println(ExportCommand(sel.Name))
 	}
 
 	return nil
+}
+
+func stdoutIsTerminal() bool {
+	info, err := os.Stdout.Stat()
+	if err != nil {
+		return false
+	}
+
+	return info.Mode()&os.ModeCharDevice != 0
 }
