@@ -26,7 +26,7 @@ func RunTUI() error {
 	final := result.(ui.Model)
 	if sel := final.SelectedProfile(); sel != nil {
 		if stdoutIsTerminal() {
-			fmt.Fprintf(os.Stderr, "\nSelected: %s\nTo apply it in your current shell, run:\n  eval \"$(awry)\"\n\n", sel.Name)
+			fmt.Fprintf(os.Stderr, "\nSelected: %s\nTo let `awry` update your shell automatically, run once:\n  awry setup-shell\nFor this selection only, run:\n  eval \"$(command awry)\"\n\n", sel.Name)
 		} else {
 			fmt.Fprintf(os.Stderr, "\nSelected: %s\n\n", sel.Name)
 		}

@@ -95,5 +95,5 @@ func currentProfileOutput(current string) (string, error) {
 
 func init() {
 	exportCmd.Flags().StringP("profile", "p", "", "Profile name to emit as shell code")
-	rootCmd.AddCommand(listCmd, currentCmd, exportCmd, useCmd, initCmd)
+	rootCmd.AddCommand(listCmd, currentCmd, exportCmd, useCmd, initCmd, setupShellCmd)
 }

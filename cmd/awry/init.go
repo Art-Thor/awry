@@ -11,7 +11,7 @@ import (
 
 var initCmd = &cobra.Command{
 	Use:   "init [bash|zsh]",
-	Short: "Print shell setup for automatic profile switching",
+	Short: "Print shell wrapper setup for bash or zsh",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		shell, err := detectShell(args)
@@ -20,6 +20,38 @@ var initCmd = &cobra.Command{
 		}
 
 		fmt.Print(shellInitScript(shell))
+		return nil
+	},
+}
+
+var setupShellCmd = &cobra.Command{
+	Use:   "setup-shell [bash|zsh]",
+	Short: "Install shell setup so `awry` updates your current shell",
+	Args:  cobra.MaximumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		shell, err := detectShell(args)
+		if err != nil {
+			return err
+		}
+
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("detecting home directory: %w", err)
+		}
+
+		rcPath := shellRCPath(homeDir, shell)
+		alreadyInstalled, err := installShellSetup(rcPath, shell)
+		if err != nil {
+			return err
+		}
+
+		if alreadyInstalled {
+			fmt.Printf("awry shell setup already exists in %s\n", rcPath)
+		} else {
+			fmt.Printf("Added awry shell setup to %s\n", rcPath)
+		}
+
+		fmt.Printf("Run: source %s\n", rcPath)
 		return nil
 	},
 }
@@ -75,4 +107,42 @@ func shellInitScript(shell string) string {
   esac
 }
 `
+}
+
+func shellRCPath(homeDir, shell string) string {
+	fileName := ".bashrc"
+	if shell == "zsh" {
+		fileName = ".zshrc"
+	}
+
+	return filepath.Join(homeDir, fileName)
+}
+
+func shellSetupLine(shell string) string {
+	return fmt.Sprintf(`eval "$(command awry init %s)"`, shell)
+}
+
+func installShellSetup(rcPath, shell string) (bool, error) {
+	content, err := os.ReadFile(rcPath)
+	if err != nil && !os.IsNotExist(err) {
+		return false, fmt.Errorf("reading %s: %w", rcPath, err)
+	}
+
+	line := shellSetupLine(shell)
+	text := string(content)
+	if strings.Contains(text, line) {
+		return true, nil
+	}
+
+	block := "\n# awry shell integration\n" + line + "\n"
+	if text == "" {
+		block = "# awry shell integration\n" + line + "\n"
+	}
+
+	updated := text + block
+	if err := os.WriteFile(rcPath, []byte(updated), 0o644); err != nil {
+		return false, fmt.Errorf("writing %s: %w", rcPath, err)
+	}
+
+	return false, nil
 }
