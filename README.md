@@ -19,6 +19,10 @@ Browse, inspect, and switch AWS profiles without leaving your terminal.
 
 ## Install
 
+Pick one installation method.
+
+If you are not sure which one to use, use Homebrew on macOS/Linux or `go install` if you already have Go set up.
+
 **Homebrew:**
 
 ```bash
@@ -39,6 +43,113 @@ cd awry
 make build
 ```
 
+If you built from source, run the local binary with:
+
+```bash
+./awry
+```
+
+## Quick Start
+
+If you want `awry` to work like this:
+
+- run `awry`
+- choose an AWS profile
+- press `Enter`
+- your current shell now uses that profile
+
+do this once after installing:
+
+```bash
+awry setup-shell
+```
+
+Then run the command it prints, for example:
+
+```bash
+source ~/.zshrc
+```
+
+or:
+
+```bash
+source ~/.bashrc
+```
+
+After that, verify the shell integration is active:
+
+```bash
+type awry
+```
+
+You should see `awry is a function`.
+
+Now the normal flow works:
+
+```bash
+awry
+awry current
+echo "$AWS_PROFILE"
+```
+
+## First-Time Setup
+
+### 1. Make sure you already have AWS profiles
+
+`awry` reads your existing AWS CLI configuration. It does not create AWS profiles for you.
+
+If you already use `aws sso login`, `aws configure`, or named AWS profiles, you are probably ready.
+
+To check, run:
+
+```bash
+aws configure list-profiles
+```
+
+If that prints profile names, `awry` should be able to see them.
+
+### 2. Install shell integration once
+
+Run:
+
+```bash
+awry setup-shell
+```
+
+This updates your shell startup file so `awry` can change the current shell session after you press `Enter`.
+
+### 3. Reload your shell config
+
+If `awry setup-shell` says it updated `~/.zshrc`, run:
+
+```bash
+source ~/.zshrc
+```
+
+If it updated `~/.bashrc`, run:
+
+```bash
+source ~/.bashrc
+```
+
+If it also mentions `~/.bash_profile`, that is expected on some bash setups.
+
+### 4. Confirm the wrapper is active
+
+Run:
+
+```bash
+type awry
+```
+
+Expected result:
+
+```bash
+awry is a function
+```
+
+If you only see a file path or binary path, the shell config has not been reloaded yet.
+
 ## Usage
 
 ```bash
@@ -56,6 +167,9 @@ awry current
 
 # Switch directly to a specific profile
 awry use my-profile
+
+# Bypass the shell wrapper and call the real binary directly
+command awry list
 ```
 
 ## TUI Keybindings
@@ -105,6 +219,58 @@ export AWS_PROFILE='your-profile'
 Without the wrapper, a standalone binary cannot modify the parent shell, so use `eval "$(awry)"` or `eval "$(awry use <profile>)"` directly.
 
 For role profiles, `awry` only sets `AWS_PROFILE`. The actual assume-role or SSO resolution still happens later in the AWS CLI or SDK.
+
+## Troubleshooting
+
+### `awry` shows profiles, but `awry current` still says no active profile set
+
+That usually means shell integration is not loaded yet.
+
+Run:
+
+```bash
+awry setup-shell
+type awry
+```
+
+If `type awry` does not say `awry is a function`, reload your shell config with `source ~/.zshrc` or `source ~/.bashrc`.
+
+### `awry setup-shell` updated the wrong shell file
+
+You can choose the shell explicitly:
+
+```bash
+awry setup-shell zsh
+```
+
+or:
+
+```bash
+awry setup-shell bash
+```
+
+### I only want to test once without changing shell config
+
+Use:
+
+```bash
+eval "$(command awry)"
+```
+
+or:
+
+```bash
+eval "$(command awry use my-profile)"
+```
+
+### How do I know which profile is active right now?
+
+Use:
+
+```bash
+awry current
+echo "$AWS_PROFILE"
+```
 
 ## Configuration
 
