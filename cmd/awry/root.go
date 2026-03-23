@@ -12,10 +12,11 @@ import (
 )
 
 var rootCmd = &cobra.Command{
-	Use:          "awry",
-	Short:        "Browse AWS profiles and emit shell commands",
-	Long:         "awry is a terminal AWS profile manager that lets you browse profiles and emit shell commands to set AWS_PROFILE.",
-	SilenceUsage: true,
+	Use:           "awry",
+	Short:         "Browse AWS profiles and emit shell commands",
+	Long:          "awry is a terminal AWS profile manager that lets you browse profiles and emit shell commands to set AWS_PROFILE.",
+	SilenceUsage:  true,
+	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return app.RunTUI()
 	},
