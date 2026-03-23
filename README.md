@@ -42,13 +42,8 @@ make build
 ## Usage
 
 ```bash
-# One-time setup for zsh
-echo 'eval "$(command awry init zsh)"' >> ~/.zshrc
-source ~/.zshrc
-
-# One-time setup for bash
-echo 'eval "$(command awry init bash)"' >> ~/.bashrc
-source ~/.bashrc
+# One-time setup for your current shell
+awry setup-shell
 
 # Interactive selection and apply in one shot after setup
 awry
@@ -80,13 +75,21 @@ awry reads your AWS configuration from `~/.aws/config` and `~/.aws/credentials`,
 To let `awry` actually change your current shell, install the wrapper once:
 
 ```bash
-eval "$(command awry init zsh)"
+awry setup-shell
+```
+
+That appends the right setup line to your shell config and tells you which file to `source`.
+
+If you prefer to install the wrapper manually for the current session, use:
+
+```bash
+eval "$(command awry init bash)"
 ```
 
 or:
 
 ```bash
-eval "$(command awry init bash)"
+eval "$(command awry init zsh)"
 ```
 
 That defines a shell function named `awry` which calls the real binary and automatically evaluates the emitted export command for `awry` and `awry use ...`.
@@ -116,14 +119,22 @@ awry respects these environment variables:
 
 ## Shell Setup
 
-Add one of these lines to your shell config for persistent setup:
+Recommended:
 
 ```bash
-eval "$(command awry init zsh)"
+awry setup-shell
+```
+
+Manual persistent setup:
+
+```bash
+echo 'eval "$(command awry init zsh)"' >> ~/.zshrc
+source ~/.zshrc
 ```
 
 ```bash
-eval "$(command awry init bash)"
+echo 'eval "$(command awry init bash)"' >> ~/.bashrc
+source ~/.bashrc
 ```
 
 ## License

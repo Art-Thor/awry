@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -83,4 +84,62 @@ func TestShellInitScript(t *testing.T) {
 			t.Fatalf("expected script to contain %q", check)
 		}
 	}
+}
+
+func TestShellRCPath(t *testing.T) {
+	if got := shellRCPath("/tmp/home", "bash"); got != "/tmp/home/.bashrc" {
+		t.Fatalf("unexpected bash rc path: %q", got)
+	}
+
+	if got := shellRCPath("/tmp/home", "zsh"); got != "/tmp/home/.zshrc" {
+		t.Fatalf("unexpected zsh rc path: %q", got)
+	}
+}
+
+func TestShellSetupLine(t *testing.T) {
+	if got := shellSetupLine("zsh"); got != `eval "$(command awry init zsh)"` {
+		t.Fatalf("unexpected setup line: %q", got)
+	}
+}
+
+func TestInstallShellSetup(t *testing.T) {
+	t.Run("creates config entry", func(t *testing.T) {
+		rcPath := filepath.Join(t.TempDir(), ".zshrc")
+
+		alreadyInstalled, err := installShellSetup(rcPath, "zsh")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if alreadyInstalled {
+			t.Fatal("expected fresh install")
+		}
+
+		content, err := os.ReadFile(rcPath)
+		if err != nil {
+			t.Fatalf("reading rc file: %v", err)
+		}
+
+		text := string(content)
+		if !strings.Contains(text, "# awry shell integration") {
+			t.Fatalf("expected awry comment in %q", text)
+		}
+		if !strings.Contains(text, shellSetupLine("zsh")) {
+			t.Fatalf("expected setup line in %q", text)
+		}
+	})
+
+	t.Run("does not duplicate config entry", func(t *testing.T) {
+		rcPath := filepath.Join(t.TempDir(), ".bashrc")
+		if err := os.WriteFile(rcPath, []byte(shellSetupLine("bash")+"\n"), 0o644); err != nil {
+			t.Fatalf("writing rc file: %v", err)
+		}
+
+		alreadyInstalled, err := installShellSetup(rcPath, "bash")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if !alreadyInstalled {
+			t.Fatal("expected existing install to be detected")
+		}
+	})
 }
