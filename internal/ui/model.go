@@ -1,14 +1,23 @@
 package ui
 
 import (
+	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/Art-Thor/awry/internal/awsconfig"
+	"github.com/Art-Thor/awry/internal/identity"
+	"github.com/Art-Thor/awry/internal/session"
 	"github.com/Art-Thor/awry/pkg/models"
+)
+
+var (
+	lookupIdentity = identity.Lookup
+	resolveSession = session.ResolveProfile
 )
 
 // Model is the top-level Bubble Tea model.
@@ -23,6 +32,10 @@ type Model struct {
 	width          int
 	height         int
 	quitting       bool
+	identity       *identity.Identity
+	identityErr    error
+	sessionInfo    *session.Info
+	sessionErr     error
 }
 
 // SelectedProfile returns the profile the user chose (nil if none).
@@ -47,7 +60,12 @@ func New() (Model, error) {
 }
 
 func (m Model) Init() tea.Cmd {
-	return nil
+	active, ok := m.activeProfile()
+	if !ok {
+		return nil
+	}
+
+	return tea.Batch(loadSessionCmd(active), loadIdentityCmd(active.Name))
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -58,8 +76,49 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		return m, nil
+	case sessionLoadedMsg:
+		m.sessionInfo = msg.info
+		m.sessionErr = msg.err
+		return m, nil
+	case identityLoadedMsg:
+		m.identity = msg.identity
+		m.identityErr = msg.err
+		return m, nil
 	}
 	return m, nil
+}
+
+type sessionLoadedMsg struct {
+	info *session.Info
+	err  error
+}
+
+type identityLoadedMsg struct {
+	identity *identity.Identity
+	err      error
+}
+
+func loadSessionCmd(profile models.Profile) tea.Cmd {
+	return func() tea.Msg {
+		info, err := resolveSession(profile)
+		if err != nil {
+			return sessionLoadedMsg{err: err}
+		}
+		return sessionLoadedMsg{info: &info}
+	}
+}
+
+func loadIdentityCmd(profile string) tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		resolved, err := lookupIdentity(ctx, profile)
+		if err != nil {
+			return identityLoadedMsg{err: err}
+		}
+		return identityLoadedMsg{identity: &resolved}
+	}
 }
 
 func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
@@ -145,6 +204,18 @@ func (m *Model) pinActiveToTop() {
 			return
 		}
 	}
+}
+
+func (m Model) activeProfile() (models.Profile, bool) {
+	if m.currentProfile == "" {
+		return models.Profile{}, false
+	}
+	for _, profile := range m.profiles {
+		if profile.Name == m.currentProfile {
+			return profile, true
+		}
+	}
+	return models.Profile{}, false
 }
 
 // inlineBadge returns the inline type badge string for a profile.
@@ -305,11 +376,69 @@ func (m Model) renderDetail(width int) string {
 	}
 
 	if p.Name == m.currentProfile {
+		b.WriteString(m.renderActiveRuntimeDetails())
 		b.WriteString("\n")
 		b.WriteString(activeProfileStyle.Render("● Currently active"))
 	}
 
 	return b.String()
+}
+
+func (m Model) renderActiveRuntimeDetails() string {
+	var b strings.Builder
+
+	b.WriteString(row("Session", m.sessionStatusValue()))
+
+	if m.identity != nil {
+		b.WriteString(row("Account ID", m.identity.AccountID))
+		b.WriteString(row("ARN", m.identity.ARN))
+		b.WriteString(row("Principal", m.identity.Principal))
+	} else if m.identityErr != nil {
+		b.WriteString(row("Identity", m.identityErr.Error()))
+	} else {
+		b.WriteString(row("Identity", "Loading..."))
+	}
+
+	return b.String()
+}
+
+func (m Model) sessionStatusValue() string {
+	if m.sessionErr != nil {
+		return m.sessionErr.Error()
+	}
+	if m.sessionInfo == nil {
+		return "Loading..."
+	}
+
+	switch m.sessionInfo.Status {
+	case session.StatusNotApplicable:
+		return "No expiry"
+	case session.StatusUnknown:
+		return "Unknown"
+	case session.StatusExpired:
+		return "Expired"
+	case session.StatusExpiringSoon:
+		return fmt.Sprintf("%s left (expiring soon)", formatDuration(m.sessionInfo.Remaining))
+	case session.StatusActive:
+		return fmt.Sprintf("%s left", formatDuration(m.sessionInfo.Remaining))
+	default:
+		return string(m.sessionInfo.Status)
+	}
+}
+
+func formatDuration(d time.Duration) string {
+	if d <= 0 {
+		return "0m"
+	}
+	hours := int(d / time.Hour)
+	minutes := int((d % time.Hour) / time.Minute)
+	if hours == 0 {
+		return fmt.Sprintf("%dm", minutes)
+	}
+	if minutes == 0 {
+		return fmt.Sprintf("%dh", hours)
+	}
+	return fmt.Sprintf("%dh %dm", hours, minutes)
 }
 
 func row(label, value string) string {
@@ -334,7 +463,7 @@ func (m Model) renderStatusBar() string {
 	if m.searching {
 		parts = append(parts, "Esc close search", "Enter confirm")
 	} else {
-		parts = append(parts, "↑↓/jk navigate", "Enter emit command", "/ search", "q quit")
+		parts = append(parts, "↑↓/jk navigate", "Enter select profile", "/ search", "q quit")
 	}
 	return statusBarStyle.Render(strings.Join(parts, "  │  "))
 }
