@@ -21,9 +21,17 @@ Delivered in `v0.2.x`:
 
 ## v0.3.0 — STS Identity
 
+- Status: shipped in `v0.3.x`
 - `awry whoami` command that calls `sts:GetCallerIdentity`
 - Detail panel shows Account ID, ARN, and User/Role on `i`
 - Graceful handling for expired or missing credentials
+
+Delivered in `v0.3.x`:
+
+- `awry whoami` for the active or requested profile
+- active-profile detail pane shows session lifetime, account ID, ARN, and principal
+- TUI refresh support for runtime session and identity state via `r`
+- friendly expired and missing-credential messaging in the detail pane
 
 ## v0.4.0 — Validation and Error States
 
