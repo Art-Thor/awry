@@ -16,6 +16,7 @@ Browse, inspect, and switch AWS profiles without leaving your terminal.
 - **Fuzzy search** — press `/` to filter profiles by name
 - **Active profile highlight** — shows which profile is currently set
 - **Shell integration** — install a shell wrapper so `awry` updates your current shell
+- **Identity and session details** — see who you are and how long the active session has left
 
 ## Install
 
@@ -165,6 +166,9 @@ awry list
 # Show current profile
 awry current
 
+# Show AWS caller identity for the active profile
+awry whoami
+
 # Switch directly to a specific profile
 awry use my-profile
 
@@ -178,6 +182,7 @@ command awry list
 |-----|--------|
 | `↑` `↓` / `j` `k` | Navigate profiles |
 | `Enter` | Select profile |
+| `r` | Refresh session and identity |
 | `/` | Fuzzy search |
 | `Esc` | Clear search |
 | `q` | Quit |
@@ -219,6 +224,15 @@ export AWS_PROFILE='your-profile'
 Without the wrapper, a standalone binary cannot modify the parent shell, so use `eval "$(awry)"` or `eval "$(awry use <profile>)"` directly.
 
 For role profiles, `awry` only sets `AWS_PROFILE`. The actual assume-role or SSO resolution still happens later in the AWS CLI or SDK.
+
+If the selected profile is currently active, the detail pane also shows live runtime information when available:
+
+- session status and remaining lifetime
+- AWS account ID
+- full caller ARN
+- principal or role/user name
+
+Press `r` in the TUI to refresh those runtime details after re-authenticating or re-running `aws sso login`.
 
 ## Troubleshooting
 

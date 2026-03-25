@@ -60,12 +60,7 @@ func New() (Model, error) {
 }
 
 func (m Model) Init() tea.Cmd {
-	active, ok := m.activeProfile()
-	if !ok {
-		return nil
-	}
-
-	return tea.Batch(loadSessionCmd(active), loadIdentityCmd(active.Name))
+	return m.refreshActiveRuntimeCmd()
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -153,6 +148,12 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "q", "ctrl+c":
 		m.quitting = true
 		return m, tea.Quit
+	case "r":
+		m.sessionInfo = nil
+		m.sessionErr = nil
+		m.identity = nil
+		m.identityErr = nil
+		return m, m.refreshActiveRuntimeCmd()
 	case "up", "k":
 		if m.cursor > 0 {
 			m.cursor--
@@ -216,6 +217,15 @@ func (m Model) activeProfile() (models.Profile, bool) {
 		}
 	}
 	return models.Profile{}, false
+}
+
+func (m Model) refreshActiveRuntimeCmd() tea.Cmd {
+	active, ok := m.activeProfile()
+	if !ok {
+		return nil
+	}
+
+	return tea.Batch(loadSessionCmd(active), loadIdentityCmd(active.Name))
 }
 
 // inlineBadge returns the inline type badge string for a profile.
@@ -312,7 +322,7 @@ func (m Model) renderList(width int) string {
 
 		isActive := p.Name == m.currentProfile
 		if isActive {
-			name += " ●"
+			name += " ●" + m.activeRuntimeBadge()
 		}
 
 		var line string
@@ -394,7 +404,7 @@ func (m Model) renderActiveRuntimeDetails() string {
 		b.WriteString(row("ARN", m.identity.ARN))
 		b.WriteString(row("Principal", m.identity.Principal))
 	} else if m.identityErr != nil {
-		b.WriteString(row("Identity", m.identityErr.Error()))
+		b.WriteString(row("Identity", identityStatusValue(m.identityErr)))
 	} else {
 		b.WriteString(row("Identity", "Loading..."))
 	}
@@ -404,7 +414,7 @@ func (m Model) renderActiveRuntimeDetails() string {
 
 func (m Model) sessionStatusValue() string {
 	if m.sessionErr != nil {
-		return m.sessionErr.Error()
+		return "Unavailable"
 	}
 	if m.sessionInfo == nil {
 		return "Loading..."
@@ -423,6 +433,38 @@ func (m Model) sessionStatusValue() string {
 		return fmt.Sprintf("%s left", formatDuration(m.sessionInfo.Remaining))
 	default:
 		return string(m.sessionInfo.Status)
+	}
+}
+
+func (m Model) activeRuntimeBadge() string {
+	if m.sessionErr != nil || m.identityErr != nil {
+		return runtimeBadgeError.String()
+	}
+	if m.sessionInfo == nil {
+		return runtimeBadgeLoading.String()
+	}
+
+	switch m.sessionInfo.Status {
+	case session.StatusExpired:
+		return runtimeBadgeExpired.String()
+	case session.StatusExpiringSoon:
+		return runtimeBadgeWarning.String()
+	case session.StatusActive:
+		return runtimeBadgeOK.String()
+	default:
+		return runtimeBadgeMuted.String()
+	}
+}
+
+func identityStatusValue(err error) string {
+	message := err.Error()
+	switch {
+	case strings.Contains(message, "expired"):
+		return "Expired - run aws sso login"
+	case strings.Contains(message, "no valid AWS credentials"):
+		return "No credentials available"
+	default:
+		return "Unavailable"
 	}
 }
 
@@ -463,7 +505,7 @@ func (m Model) renderStatusBar() string {
 	if m.searching {
 		parts = append(parts, "Esc close search", "Enter confirm")
 	} else {
-		parts = append(parts, "↑↓/jk navigate", "Enter select profile", "/ search", "q quit")
+		parts = append(parts, "↑↓/jk navigate", "Enter select profile", "r refresh", "/ search", "q quit")
 	}
 	return statusBarStyle.Render(strings.Join(parts, "  │  "))
 }

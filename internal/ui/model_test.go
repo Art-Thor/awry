@@ -40,7 +40,7 @@ func TestSessionStatusValue(t *testing.T) {
 		want string
 	}{
 		{name: "loading", want: "Loading..."},
-		{name: "error", err: errors.New("boom"), want: "boom"},
+		{name: "error", err: errors.New("boom"), want: "Unavailable"},
 		{name: "no expiry", info: &session.Info{Status: session.StatusNotApplicable}, want: "No expiry"},
 		{name: "unknown", info: &session.Info{Status: session.StatusUnknown}, want: "Unknown"},
 		{name: "expired", info: &session.Info{Status: session.StatusExpired}, want: "Expired"},
@@ -53,6 +53,49 @@ func TestSessionStatusValue(t *testing.T) {
 			m := Model{sessionInfo: tt.info, sessionErr: tt.err}
 			if got := m.sessionStatusValue(); got != tt.want {
 				t.Fatalf("sessionStatusValue() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestIdentityStatusValue(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want string
+	}{
+		{name: "expired", err: errors.New("AWS SSO session expired for profile \"sandbox\""), want: "Expired - run aws sso login"},
+		{name: "no creds", err: errors.New("no valid AWS credentials available for profile \"sandbox\""), want: "No credentials available"},
+		{name: "other", err: errors.New("boom"), want: "Unavailable"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := identityStatusValue(tt.err); got != tt.want {
+				t.Fatalf("identityStatusValue() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestActiveRuntimeBadge(t *testing.T) {
+	tests := []struct {
+		name string
+		m    Model
+		want string
+	}{
+		{name: "loading", m: Model{}, want: " [LOAD]"},
+		{name: "error", m: Model{sessionErr: errors.New("boom")}, want: " [CHECK]"},
+		{name: "active", m: Model{sessionInfo: &session.Info{Status: session.StatusActive}}, want: " [READY]"},
+		{name: "soon", m: Model{sessionInfo: &session.Info{Status: session.StatusExpiringSoon}}, want: " [SOON]"},
+		{name: "expired", m: Model{sessionInfo: &session.Info{Status: session.StatusExpired}}, want: " [EXPIRED]"},
+		{name: "unknown", m: Model{sessionInfo: &session.Info{Status: session.StatusUnknown}}, want: " [INFO]"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.m.activeRuntimeBadge(); got != tt.want {
+				t.Fatalf("activeRuntimeBadge() = %q, want %q", got, tt.want)
 			}
 		})
 	}
@@ -95,7 +138,14 @@ func TestRenderDetailShowsIdentityError(t *testing.T) {
 	}
 
 	view := m.renderDetail(80)
-	if !strings.Contains(view, "AWS SSO session expired") {
+	if !strings.Contains(view, "Expired - run aws sso login") {
 		t.Fatalf("expected identity error in detail view\n%s", view)
+	}
+}
+
+func TestRenderStatusBarIncludesRefresh(t *testing.T) {
+	view := Model{}.renderStatusBar()
+	if !strings.Contains(view, "r refresh") {
+		t.Fatalf("expected refresh hint in status bar\n%s", view)
 	}
 }
