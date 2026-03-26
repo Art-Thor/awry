@@ -183,6 +183,7 @@ command awry list
 | `↑` `↓` / `j` `k` | Navigate profiles |
 | `Enter` | Select profile |
 | `r` | Refresh session and identity |
+| `?` | Open keyboard help |
 | `/` | Fuzzy search |
 | `Esc` | Clear search |
 | `q` | Quit |
@@ -233,6 +234,16 @@ If the selected profile is currently active, the detail pane also shows live run
 - principal or role/user name
 
 Press `r` in the TUI to refresh those runtime details after re-authenticating or re-running `aws sso login`.
+Press `?` in the TUI to see the full keyboard reference without leaving the app.
+
+## Screenshots
+
+If you plan to share `awry` publicly, add a screenshot or short GIF here showing:
+
+- the profile list and detail pane
+- the active profile runtime badge
+- session time left and identity details
+- the `?` help overlay
 
 ## Troubleshooting
 

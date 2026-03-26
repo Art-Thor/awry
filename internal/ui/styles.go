@@ -116,6 +116,10 @@ var (
 				Foreground(colorWarning).
 				SetString(" [SOON]")
 
+	runtimeBadgeExpiring = lipgloss.NewStyle().
+				Foreground(colorWarning).
+				SetString(" [EXPIRING]")
+
 	runtimeBadgeExpired = lipgloss.NewStyle().
 				Foreground(colorWarning).
 				Bold(true).
@@ -125,13 +129,40 @@ var (
 				Foreground(colorWarning).
 				SetString(" [CHECK]")
 
+	runtimeBadgeNoCreds = lipgloss.NewStyle().
+				Foreground(colorWarning).
+				SetString(" [NO CREDS]")
+
 	runtimeBadgeLoading = lipgloss.NewStyle().
 				Foreground(colorInfo).
 				SetString(" [LOAD]")
 
-	runtimeBadgeMuted = lipgloss.NewStyle().
+	runtimeBadgeUnknown = lipgloss.NewStyle().
+				Foreground(colorSecondary).
+				SetString(" [UNKNOWN]")
+
+	runtimeBadgeInfo = lipgloss.NewStyle().
 				Foreground(colorSecondary).
 				SetString(" [INFO]")
+
+	helpBoxStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(colorMuted).
+			Padding(1, 2)
+
+	helpTitleStyle = lipgloss.NewStyle().
+			Foreground(colorPrimary).
+			Bold(true)
+
+	helpKeyStyle = lipgloss.NewStyle().
+			Foreground(colorInfo).
+			Width(20)
+
+	helpDescStyle = lipgloss.NewStyle().
+			Foreground(colorWhite)
+
+	helpFooterStyle = lipgloss.NewStyle().
+			Foreground(colorSecondary)
 
 	// Divider between active profile and the rest
 	dividerStyle = lipgloss.NewStyle().
