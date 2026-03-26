@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/Art-Thor/awry/internal/identity"
 	"github.com/Art-Thor/awry/internal/session"
 	"github.com/Art-Thor/awry/pkg/models"
@@ -42,8 +44,8 @@ func TestSessionStatusValue(t *testing.T) {
 		{name: "loading", want: "Loading..."},
 		{name: "error", err: errors.New("boom"), want: "Unavailable"},
 		{name: "no expiry", info: &session.Info{Status: session.StatusNotApplicable}, want: "No expiry"},
-		{name: "unknown", info: &session.Info{Status: session.StatusUnknown}, want: "Unknown"},
-		{name: "expired", info: &session.Info{Status: session.StatusExpired}, want: "Expired"},
+		{name: "unknown", info: &session.Info{Status: session.StatusUnknown}, want: "Unknown - run aws sso login if needed"},
+		{name: "expired", info: &session.Info{Status: session.StatusExpired}, want: "Expired - refresh credentials"},
 		{name: "expiring", info: &session.Info{Status: session.StatusExpiringSoon, Remaining: 10 * time.Minute}, want: "10m left (expiring soon)"},
 		{name: "active", info: &session.Info{Status: session.StatusActive, Remaining: 95 * time.Minute}, want: "1h 35m left"},
 	}
@@ -51,7 +53,7 @@ func TestSessionStatusValue(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			m := Model{sessionInfo: tt.info, sessionErr: tt.err}
-			if got := m.sessionStatusValue(); got != tt.want {
+			if got := m.sessionStatusValue(models.Profile{Type: models.ProfileTypeSSO}); got != tt.want {
 				t.Fatalf("sessionStatusValue() = %q, want %q", got, tt.want)
 			}
 		})
@@ -86,10 +88,11 @@ func TestActiveRuntimeBadge(t *testing.T) {
 	}{
 		{name: "loading", m: Model{}, want: " [LOAD]"},
 		{name: "error", m: Model{sessionErr: errors.New("boom")}, want: " [CHECK]"},
+		{name: "no creds", m: Model{identityErr: errors.New("no valid AWS credentials available for profile \"sandbox\"")}, want: " [NO CREDS]"},
 		{name: "active", m: Model{sessionInfo: &session.Info{Status: session.StatusActive}}, want: " [READY]"},
-		{name: "soon", m: Model{sessionInfo: &session.Info{Status: session.StatusExpiringSoon}}, want: " [SOON]"},
+		{name: "soon", m: Model{sessionInfo: &session.Info{Status: session.StatusExpiringSoon}}, want: " [EXPIRING]"},
 		{name: "expired", m: Model{sessionInfo: &session.Info{Status: session.StatusExpired}}, want: " [EXPIRED]"},
-		{name: "unknown", m: Model{sessionInfo: &session.Info{Status: session.StatusUnknown}}, want: " [INFO]"},
+		{name: "unknown", m: Model{sessionInfo: &session.Info{Status: session.StatusUnknown}}, want: " [UNKNOWN]"},
 	}
 
 	for _, tt := range tests {
@@ -148,4 +151,39 @@ func TestRenderStatusBarIncludesRefresh(t *testing.T) {
 	if !strings.Contains(view, "r refresh") {
 		t.Fatalf("expected refresh hint in status bar\n%s", view)
 	}
+	if !strings.Contains(view, "? help") {
+		t.Fatalf("expected help hint in status bar\n%s", view)
+	}
+}
+
+func TestHelpOverlayToggle(t *testing.T) {
+	m := Model{}
+	updated, _ := m.handleKey(key("?"))
+	opened := updated.(Model)
+	if !opened.helpVisible {
+		t.Fatal("expected help overlay to open")
+	}
+
+	updated, _ = opened.handleKey(key("esc"))
+	closed := updated.(Model)
+	if closed.helpVisible {
+		t.Fatal("expected help overlay to close")
+	}
+}
+
+func TestRenderHelpOverlay(t *testing.T) {
+	view := Model{}.renderHelpOverlay()
+	checks := []string{"Keyboard Help", "r", "Refresh active session and identity", "Press ? or Esc to close"}
+	for _, check := range checks {
+		if !strings.Contains(view, check) {
+			t.Fatalf("expected help overlay to contain %q\n%s", check, view)
+		}
+	}
+}
+
+func key(value string) tea.KeyMsg {
+	if value == "esc" {
+		return tea.KeyMsg{Type: tea.KeyEsc}
+	}
+	return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(value)}
 }

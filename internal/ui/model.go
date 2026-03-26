@@ -32,6 +32,7 @@ type Model struct {
 	width          int
 	height         int
 	quitting       bool
+	helpVisible    bool
 	identity       *identity.Identity
 	identityErr    error
 	sessionInfo    *session.Info
@@ -117,6 +118,14 @@ func loadIdentityCmd(profile string) tea.Cmd {
 }
 
 func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.helpVisible {
+		switch msg.String() {
+		case "?", "esc", "q":
+			m.helpVisible = false
+		}
+		return m, nil
+	}
+
 	// When in search mode, handle text input.
 	if m.searching {
 		switch msg.Type {
@@ -148,6 +157,9 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "q", "ctrl+c":
 		m.quitting = true
 		return m, tea.Quit
+	case "?":
+		m.helpVisible = true
+		return m, nil
 	case "r":
 		m.sessionInfo = nil
 		m.sessionErr = nil
@@ -278,7 +290,12 @@ func (m Model) View() string {
 		detailPanelStyle.Width(detailWidth).Render(detail),
 	)
 
-	return lipgloss.JoinVertical(lipgloss.Left, panels, status)
+	view := lipgloss.JoinVertical(lipgloss.Left, panels, status)
+	if m.helpVisible {
+		return view + "\n\n" + m.renderHelpOverlay()
+	}
+
+	return view
 }
 
 func (m Model) renderList(width int) string {
@@ -386,7 +403,7 @@ func (m Model) renderDetail(width int) string {
 	}
 
 	if p.Name == m.currentProfile {
-		b.WriteString(m.renderActiveRuntimeDetails())
+		b.WriteString(m.renderActiveRuntimeDetails(p))
 		b.WriteString("\n")
 		b.WriteString(activeProfileStyle.Render("● Currently active"))
 	}
@@ -394,10 +411,10 @@ func (m Model) renderDetail(width int) string {
 	return b.String()
 }
 
-func (m Model) renderActiveRuntimeDetails() string {
+func (m Model) renderActiveRuntimeDetails(profile models.Profile) string {
 	var b strings.Builder
 
-	b.WriteString(row("Session", m.sessionStatusValue()))
+	b.WriteString(row("Session", m.sessionStatusValue(profile)))
 
 	if m.identity != nil {
 		b.WriteString(row("Account ID", m.identity.AccountID))
@@ -412,7 +429,7 @@ func (m Model) renderActiveRuntimeDetails() string {
 	return b.String()
 }
 
-func (m Model) sessionStatusValue() string {
+func (m Model) sessionStatusValue(profile models.Profile) string {
 	if m.sessionErr != nil {
 		return "Unavailable"
 	}
@@ -422,11 +439,17 @@ func (m Model) sessionStatusValue() string {
 
 	switch m.sessionInfo.Status {
 	case session.StatusNotApplicable:
+		if profile.Type == models.ProfileTypeStatic {
+			return "No expiry (static credentials)"
+		}
 		return "No expiry"
 	case session.StatusUnknown:
+		if profile.Type == models.ProfileTypeSSO {
+			return "Unknown - run aws sso login if needed"
+		}
 		return "Unknown"
 	case session.StatusExpired:
-		return "Expired"
+		return "Expired - refresh credentials"
 	case session.StatusExpiringSoon:
 		return fmt.Sprintf("%s left (expiring soon)", formatDuration(m.sessionInfo.Remaining))
 	case session.StatusActive:
@@ -438,6 +461,9 @@ func (m Model) sessionStatusValue() string {
 
 func (m Model) activeRuntimeBadge() string {
 	if m.sessionErr != nil || m.identityErr != nil {
+		if isNoCredentialsError(m.identityErr) {
+			return runtimeBadgeNoCreds.String()
+		}
 		return runtimeBadgeError.String()
 	}
 	if m.sessionInfo == nil {
@@ -448,24 +474,54 @@ func (m Model) activeRuntimeBadge() string {
 	case session.StatusExpired:
 		return runtimeBadgeExpired.String()
 	case session.StatusExpiringSoon:
-		return runtimeBadgeWarning.String()
+		return runtimeBadgeExpiring.String()
 	case session.StatusActive:
 		return runtimeBadgeOK.String()
+	case session.StatusUnknown:
+		return runtimeBadgeUnknown.String()
 	default:
-		return runtimeBadgeMuted.String()
+		return runtimeBadgeInfo.String()
 	}
 }
 
 func identityStatusValue(err error) string {
+	if err == nil {
+		return "Loading..."
+	}
+
 	message := err.Error()
 	switch {
 	case strings.Contains(message, "expired"):
 		return "Expired - run aws sso login"
-	case strings.Contains(message, "no valid AWS credentials"):
+	case isNoCredentialsError(err):
 		return "No credentials available"
 	default:
 		return "Unavailable"
 	}
+}
+
+func isNoCredentialsError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(strings.ToLower(err.Error()), "no valid aws credentials")
+}
+
+func (m Model) renderHelpOverlay() string {
+	rows := []string{
+		helpTitleStyle.Render("Keyboard Help"),
+		"",
+		helpKeyStyle.Render("j / k, up / down") + helpDescStyle.Render("Move through profiles"),
+		helpKeyStyle.Render("Enter") + helpDescStyle.Render("Select the highlighted profile"),
+		helpKeyStyle.Render("/") + helpDescStyle.Render("Start fuzzy search"),
+		helpKeyStyle.Render("r") + helpDescStyle.Render("Refresh active session and identity"),
+		helpKeyStyle.Render("?") + helpDescStyle.Render("Toggle this help overlay"),
+		helpKeyStyle.Render("q") + helpDescStyle.Render("Quit awry"),
+		"",
+		helpFooterStyle.Render("Press ? or Esc to close"),
+	}
+
+	return helpBoxStyle.Render(strings.Join(rows, "\n"))
 }
 
 func formatDuration(d time.Duration) string {
@@ -505,7 +561,7 @@ func (m Model) renderStatusBar() string {
 	if m.searching {
 		parts = append(parts, "Esc close search", "Enter confirm")
 	} else {
-		parts = append(parts, "↑↓/jk navigate", "Enter select profile", "r refresh", "/ search", "q quit")
+		parts = append(parts, "↑↓/jk navigate", "Enter select profile", "r refresh", "? help", "/ search", "q quit")
 	}
 	return statusBarStyle.Render(strings.Join(parts, "  │  "))
 }
