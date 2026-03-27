@@ -52,7 +52,7 @@ var currentCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		current, err := currentProfileOutput(awsconfig.CurrentProfile())
 		if err != nil {
-			return err
+			return fmt.Errorf("no active AWS profile set; use `awry` or `awry export --profile <name>`")
 		}
 
 		fmt.Println(current)

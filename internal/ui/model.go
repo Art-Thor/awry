@@ -311,7 +311,16 @@ func (m Model) renderList(width int) string {
 	}
 
 	if len(m.filtered) == 0 {
-		b.WriteString(lipgloss.NewStyle().Foreground(colorSecondary).Render("No profiles found"))
+		if m.searchQuery != "" {
+			b.WriteString(lipgloss.NewStyle().Foreground(colorSecondary).Render("No profiles match search"))
+			b.WriteString("\n")
+			b.WriteString(lipgloss.NewStyle().Foreground(colorMuted).Render("Press Esc to clear the filter"))
+			return b.String()
+		}
+
+		b.WriteString(lipgloss.NewStyle().Foreground(colorSecondary).Render("No AWS profiles found"))
+		b.WriteString("\n")
+		b.WriteString(lipgloss.NewStyle().Foreground(colorMuted).Render("Check ~/.aws/config and ~/.aws/credentials"))
 		return b.String()
 	}
 
@@ -335,7 +344,7 @@ func (m Model) renderList(width int) string {
 
 	for i := start; i < end; i++ {
 		p := m.filtered[i]
-		name := p.Name + inlineBadge(p.Type)
+		name := p.Name + inlineBadge(p.Type) + m.listHealthBadge(p)
 
 		isActive := p.Name == m.currentProfile
 		if isActive {
@@ -378,6 +387,7 @@ func (m Model) renderDetail(width int) string {
 
 	badge := badgeFor(p.Type)
 	b.WriteString(row("Type", badge))
+	b.WriteString(row("Health", m.profileHealthValue(p)))
 	b.WriteString(row("Region", p.DisplayRegion()))
 
 	if p.SourceProfile != "" {
@@ -406,7 +416,12 @@ func (m Model) renderDetail(width int) string {
 		b.WriteString(m.renderActiveRuntimeDetails(p))
 		b.WriteString("\n")
 		b.WriteString(activeProfileStyle.Render("● Currently active"))
+	} else {
+		b.WriteString(row("Export", fmt.Sprintf("export AWS_PROFILE=%s", p.Name)))
 	}
+
+	b.WriteString("\n")
+	b.WriteString(lipgloss.NewStyle().Foreground(colorMuted).Render("Press Enter to emit the export command for this profile."))
 
 	return b.String()
 }
@@ -464,6 +479,9 @@ func (m Model) activeRuntimeBadge() string {
 		if isNoCredentialsError(m.identityErr) {
 			return runtimeBadgeNoCreds.String()
 		}
+		if isInvalidIdentityError(m.identityErr) {
+			return runtimeBadgeInvalid.String()
+		}
 		return runtimeBadgeError.String()
 	}
 	if m.sessionInfo == nil {
@@ -482,6 +500,59 @@ func (m Model) activeRuntimeBadge() string {
 	default:
 		return runtimeBadgeInfo.String()
 	}
+}
+
+func (m Model) listHealthBadge(profile models.Profile) string {
+	if profile.Name != m.currentProfile {
+		if profile.Type == models.ProfileTypeUnknown {
+			return runtimeBadgeInvalid.String()
+		}
+		if profile.Type == models.ProfileTypeRole && profile.SourceProfile == "" {
+			return runtimeBadgeInvalid.String()
+		}
+		return ""
+	}
+
+	return m.activeRuntimeBadge()
+}
+
+func (m Model) profileHealthValue(profile models.Profile) string {
+	if profile.Type == models.ProfileTypeUnknown {
+		return "Invalid - profile is missing auth configuration"
+	}
+
+	if profile.Type == models.ProfileTypeRole && profile.SourceProfile == "" {
+		return "Invalid - role profile has no source_profile"
+	}
+
+	if profile.Name != m.currentProfile {
+		switch profile.Type {
+		case models.ProfileTypeSSO:
+			return "Needs runtime check when active"
+		case models.ProfileTypeStatic:
+			if profile.HasCredentials {
+				return "Configured"
+			}
+			return "Invalid - static profile has no credentials"
+		default:
+			return "Configured"
+		}
+	}
+
+	if m.sessionErr != nil {
+		return "Unavailable - unable to inspect session"
+	}
+	if m.identityErr != nil {
+		if isNoCredentialsError(m.identityErr) {
+			return "No credentials available"
+		}
+		if isInvalidIdentityError(m.identityErr) {
+			return "Invalid - AWS configuration rejected"
+		}
+		return "Check configuration"
+	}
+
+	return m.sessionStatusValue(profile)
 }
 
 func identityStatusValue(err error) string {
@@ -505,6 +576,17 @@ func isNoCredentialsError(err error) bool {
 		return false
 	}
 	return strings.Contains(strings.ToLower(err.Error()), "no valid aws credentials")
+}
+
+func isInvalidIdentityError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	message := strings.ToLower(err.Error())
+	return strings.Contains(message, "could not load config") ||
+		strings.Contains(message, "invalid configuration") ||
+		strings.Contains(message, "partial credentials")
 }
 
 func (m Model) renderHelpOverlay() string {

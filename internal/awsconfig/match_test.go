@@ -40,12 +40,12 @@ func TestMatchProfile_CaseInsensitive(t *testing.T) {
 
 func TestMatchProfile_Fuzzy(t *testing.T) {
 	profiles := testProfiles()
-	result, err := MatchProfile("stag", profiles)
+	result, err := MatchProfile("devac", profiles)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if result.Profile.Name != "staging" {
-		t.Errorf("expected staging, got %s", result.Profile.Name)
+	if result.Profile.Name != "dev-account" {
+		t.Errorf("expected dev-account, got %s", result.Profile.Name)
 	}
 }
 
@@ -66,6 +66,9 @@ func TestMatchProfile_Ambiguous(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for ambiguous match")
 	}
+	if got := err.Error(); got != `profile "prod" is ambiguous. matches: prod-admin, production, prod-readonly` {
+		t.Fatalf("unexpected error: %s", got)
+	}
 }
 
 func TestMatchProfile_NotFound(t *testing.T) {
@@ -73,6 +76,20 @@ func TestMatchProfile_NotFound(t *testing.T) {
 	_, err := MatchProfile("nonexistent", profiles)
 	if err == nil {
 		t.Fatal("expected error for not found")
+	}
+	if got := err.Error(); got != `profile "nonexistent" not found` {
+		t.Fatalf("unexpected error: %s", got)
+	}
+}
+
+func TestMatchProfile_AmbiguousFuzzySuggestions(t *testing.T) {
+	profiles := testProfiles()
+	_, err := MatchProfile("deva", profiles)
+	if err == nil {
+		t.Fatal("expected error for ambiguous match")
+	}
+	if got := err.Error(); got != `profile "deva" is ambiguous. matches: Dev-Staging, dev-account` {
+		t.Fatalf("unexpected error: %s", got)
 	}
 }
 
