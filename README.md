@@ -13,6 +13,7 @@ Browse, inspect, and switch AWS profiles without leaving your terminal.
 - **Dual-panel TUI** — profile list + detail view side by side
 - **SSO v2 support** — resolves `sso_session` references automatically
 - **Profile type detection** — identifies SSO, Role, and Static credential profiles
+- **Validation-aware profile health** — surfaces invalid, expired, and missing-credential states
 - **Fuzzy search** — press `/` to filter profiles by name
 - **Active profile highlight** — shows which profile is currently set
 - **Shell integration** — install a shell wrapper so `awry` updates your current shell
@@ -192,6 +193,12 @@ command awry list
 
 awry reads your AWS configuration from `~/.aws/config` and `~/.aws/credentials`, merges them, and presents a unified view.
 
+Profiles also include lightweight health signals so broken or incomplete local AWS setup is easier to spot before switching. In the TUI, `awry` can surface states such as:
+
+- `[EXPIRED]` for expired active sessions
+- `[NO CREDS]` when the active profile has no usable credentials
+- `[INVALID]` for obviously broken profile definitions such as unknown auth type or a role profile without `source_profile`
+
 To let `awry` actually change your current shell, install the wrapper once:
 
 ```bash
@@ -233,6 +240,14 @@ If the selected profile is currently active, the detail pane also shows live run
 - full caller ARN
 - principal or role/user name
 
+For any highlighted profile, the detail pane also shows:
+
+- normalized profile type
+- health status
+- region
+- `source_profile` and `role_arn` when present
+- the export command that `Enter` will emit
+
 Press `r` in the TUI to refresh those runtime details after re-authenticating or re-running `aws sso login`.
 Press `?` in the TUI to see the full keyboard reference without leaving the app.
 
@@ -259,6 +274,38 @@ type awry
 ```
 
 If `type awry` does not say `awry is a function`, reload your shell config with `source ~/.zshrc` or `source ~/.bashrc`.
+
+### A profile shows `[INVALID]` in the TUI
+
+That means `awry` found a profile entry but the local configuration looks incomplete.
+
+Common causes:
+
+- a role profile is missing `source_profile`
+- a profile exists in config but has no usable auth settings
+- your AWS configuration is partially defined across files
+
+Check the profile in:
+
+```bash
+~/.aws/config
+~/.aws/credentials
+```
+
+Then refresh the TUI with `r` if the affected profile is active.
+
+### A profile shows `[NO CREDS]` or `[EXPIRED]`
+
+- `[NO CREDS]` usually means the active profile cannot currently authenticate
+- `[EXPIRED]` usually means your SSO or temporary session needs to be refreshed
+
+Typical fix:
+
+```bash
+aws sso login --profile <profile>
+```
+
+Then return to `awry` and press `r` to refresh runtime state.
 
 ### `awry setup-shell` updated the wrong shell file
 

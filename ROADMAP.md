@@ -35,9 +35,18 @@ Delivered in `v0.3.x`:
 
 ## v0.4.0 — Validation and Error States
 
-- Detect invalid or expired profiles
+- Status: shipped in `v0.4.0`
+- Detect invalid or expired profiles more clearly in the TUI
 - Status badges: `[EXPIRED]`, `[INVALID]`, `[NO CREDS]`
+- Better matching reliability and ambiguity errors for `awry use` and `awry export`
 - SSO session expiration checks by reading cached token state
+
+Delivered in `v0.4.0`:
+
+- clearer matching resolution order and ambiguity output
+- ranked profile suggestions for ambiguous matches
+- TUI health field and invalid-profile indicators
+- improved empty-state and current-profile guidance
 
 ## v0.5.0 — Favorites and Recents
 
@@ -62,16 +71,21 @@ Delivered in `v0.3.x`:
 
 - Visualize role assumption chains such as `default -> base -> prod-admin`
 - Refactor into `/internal/aws`, `/internal/session`, and `/internal/shell`
-- Add `awry doctor` to validate the full local AWS setup
 
-## v0.9.0 — Help and UX Polish
+## v0.9.0 — Doctor and Validation
+
+- Add `awry doctor` to validate the full local AWS setup
+- Explain broken config, missing credentials, and expired session causes
+- Add fix-oriented guidance for common local AWS problems
+
+## v0.10.0 — Help and UX Polish
 
 - `?` opens a hotkey overlay
 - Responsive layout that adapts to terminal size
 - Color themes with `NO_COLOR` support
 - Demo GIF and polished README with screenshots
 
-## v0.10.0 — Tags and Filtering
+## v0.11.0 — Tags and Filtering
 
 - User-defined tags per profile in config
 - Filter by tag in the TUI with `t`
