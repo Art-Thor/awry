@@ -99,3 +99,13 @@ func TestMatchProfile_Empty(t *testing.T) {
 		t.Fatal("expected error for empty name")
 	}
 }
+
+func TestMatchProfile_WhitespaceOnly(t *testing.T) {
+	_, err := MatchProfile("   ", testProfiles())
+	if err == nil {
+		t.Fatal("expected error for whitespace-only name")
+	}
+	if got := err.Error(); got != `profile name is required` {
+		t.Fatalf("unexpected error: %s", got)
+	}
+}

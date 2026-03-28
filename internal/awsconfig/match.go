@@ -21,11 +21,11 @@ type MatchResult struct {
 // 4. Fuzzy match (all query chars appear in order)
 // Returns an error with suggestions if no match or ambiguous.
 func MatchProfile(name string, profiles []models.Profile) (*MatchResult, error) {
-	if name == "" {
+	query := strings.TrimSpace(name)
+	if query == "" {
 		return nil, fmt.Errorf("profile name is required")
 	}
 
-	query := strings.TrimSpace(name)
 	lower := strings.ToLower(query)
 
 	// 1. Exact match.

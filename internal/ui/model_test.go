@@ -93,6 +93,7 @@ func TestActiveRuntimeBadge(t *testing.T) {
 		{name: "soon", m: Model{sessionInfo: &session.Info{Status: session.StatusExpiringSoon}}, want: " [EXPIRING]"},
 		{name: "expired", m: Model{sessionInfo: &session.Info{Status: session.StatusExpired}}, want: " [EXPIRED]"},
 		{name: "unknown", m: Model{sessionInfo: &session.Info{Status: session.StatusUnknown}}, want: " [UNKNOWN]"},
+		{name: "not applicable", m: Model{sessionInfo: &session.Info{Status: session.StatusNotApplicable}}, want: " [READY]"},
 	}
 
 	for _, tt := range tests {
@@ -101,6 +102,18 @@ func TestActiveRuntimeBadge(t *testing.T) {
 				t.Fatalf("activeRuntimeBadge() = %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestRenderDetailShowsShellSafeExportPreview(t *testing.T) {
+	m := Model{
+		profiles: []models.Profile{{Name: "team's sandbox", Type: models.ProfileTypeStatic, HasCredentials: true}},
+		filtered: []models.Profile{{Name: "team's sandbox", Type: models.ProfileTypeStatic, HasCredentials: true}},
+	}
+
+	view := m.renderDetail(80)
+	if !strings.Contains(view, `export AWS_PROFILE='team"'"'s sandbox'`) {
+		t.Fatalf("expected shell-safe export preview in detail view\n%s", view)
 	}
 }
 

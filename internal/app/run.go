@@ -25,12 +25,13 @@ func RunTUI() error {
 
 	final := result.(ui.Model)
 	if sel := final.SelectedProfile(); sel != nil {
+		export := ExportCommand(sel.Name)
 		if stdoutIsTerminal() {
-			fmt.Fprintf(os.Stderr, "\nSelected: %s\nTo let `awry` update your shell automatically, run once:\n  awry setup-shell\nFor this selection only, run:\n  eval \"$(command awry)\"\n\n", sel.Name)
+			fmt.Fprintf(os.Stderr, "\nSelected: %s\nTo let `awry` update your shell automatically, run once:\n  awry setup-shell\nFor this selection only, run:\n  %s\n\n", sel.Name, selectionHintCommand(sel.Name))
 		} else {
 			fmt.Fprintf(os.Stderr, "\nSelected: %s\n\n", sel.Name)
 		}
-		fmt.Println(ExportCommand(sel.Name))
+		fmt.Println(export)
 	}
 
 	return nil
@@ -43,4 +44,8 @@ func stdoutIsTerminal() bool {
 	}
 
 	return info.Mode()&os.ModeCharDevice != 0
+}
+
+func selectionHintCommand(profile string) string {
+	return fmt.Sprintf("eval %q", ExportCommand(profile))
 }

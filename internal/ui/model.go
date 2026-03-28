@@ -417,7 +417,7 @@ func (m Model) renderDetail(width int) string {
 		b.WriteString("\n")
 		b.WriteString(activeProfileStyle.Render("● Currently active"))
 	} else {
-		b.WriteString(row("Export", fmt.Sprintf("export AWS_PROFILE=%s", p.Name)))
+		b.WriteString(row("Export", exportCommand(p.Name)))
 	}
 
 	b.WriteString("\n")
@@ -494,6 +494,8 @@ func (m Model) activeRuntimeBadge() string {
 	case session.StatusExpiringSoon:
 		return runtimeBadgeExpiring.String()
 	case session.StatusActive:
+		return runtimeBadgeOK.String()
+	case session.StatusNotApplicable:
 		return runtimeBadgeOK.String()
 	case session.StatusUnknown:
 		return runtimeBadgeUnknown.String()
@@ -623,6 +625,28 @@ func formatDuration(d time.Duration) string {
 
 func row(label, value string) string {
 	return detailLabelStyle.Render(label) + detailValueStyle.Render(value) + "\n"
+}
+
+func exportCommand(profile string) string {
+	return fmt.Sprintf("export AWS_PROFILE=%s", shellQuote(profile))
+}
+
+func shellQuote(s string) string {
+	if s == "" {
+		return "''"
+	}
+
+	quoted := "'"
+	for _, r := range s {
+		if r == '\'' {
+			quoted += `"'"'`
+			continue
+		}
+		quoted += string(r)
+	}
+	quoted += "'"
+
+	return quoted
 }
 
 func badgeFor(t models.ProfileType) string {
