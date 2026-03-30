@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/Art-Thor/awry/pkg/models"
+	"github.com/Art-Thor/awry/pkg/shellenv"
 )
 
 // inlineBadge returns the inline type badge string for a profile.
@@ -217,25 +218,7 @@ func row(label, value string) string {
 }
 
 func exportCommand(profile string) string {
-	return fmt.Sprintf("export AWS_PROFILE=%s", shellQuote(profile))
-}
-
-func shellQuote(s string) string {
-	if s == "" {
-		return "''"
-	}
-
-	quoted := "'"
-	for _, r := range s {
-		if r == '\'' {
-			quoted += `"'"'`
-			continue
-		}
-		quoted += string(r)
-	}
-	quoted += "'"
-
-	return quoted
+	return shellenv.ExportCommand(profile)
 }
 
 func badgeFor(t models.ProfileType) string {

@@ -1,26 +1,19 @@
 package app
 
-import "fmt"
+import "github.com/Art-Thor/awry/pkg/shellenv"
+
+const (
+	ShellBash = shellenv.ShellBash
+	ShellZsh  = shellenv.ShellZsh
+	ShellFish = shellenv.ShellFish
+)
 
 // ExportCommand returns a POSIX-shell-safe command that sets AWS_PROFILE.
 func ExportCommand(profile string) string {
-	return fmt.Sprintf("export AWS_PROFILE=%s", shellQuote(profile))
+	return shellenv.ExportCommand(profile)
 }
 
-func shellQuote(s string) string {
-	if s == "" {
-		return "''"
-	}
-
-	quoted := "'"
-	for _, r := range s {
-		if r == '\'' {
-			quoted += `'"'"'`
-			continue
-		}
-		quoted += string(r)
-	}
-	quoted += "'"
-
-	return quoted
+// ExportCommandForShell returns shell code that sets AWS_PROFILE.
+func ExportCommandForShell(profile, shell string) string {
+	return shellenv.ExportCommandForShell(profile, shell)
 }

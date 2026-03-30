@@ -65,6 +65,7 @@ var exportCmd = &cobra.Command{
 	Short: "Print shell code for a profile",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		profile, _ := cmd.Flags().GetString("profile")
+		shell, _ := cmd.Flags().GetString("shell")
 		if profile == "" {
 			return fmt.Errorf("--profile flag is required")
 		}
@@ -80,7 +81,7 @@ var exportCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println(app.ExportCommand(result.Profile.Name))
+		fmt.Println(app.ExportCommandForShell(result.Profile.Name, shell))
 		return nil
 	},
 }
@@ -95,6 +96,7 @@ func currentProfileOutput(current string) (string, error) {
 
 func init() {
 	exportCmd.Flags().StringP("profile", "p", "", "Profile name to emit as shell code")
+	exportCmd.Flags().String("shell", "", "Shell syntax to emit: bash, zsh, or fish")
 	whoamiCmd.Flags().StringP("profile", "p", "", "Profile name to inspect instead of the active profile")
 	rootCmd.AddCommand(listCmd, currentCmd, exportCmd, useCmd, whoamiCmd, initCmd, setupShellCmd)
 }

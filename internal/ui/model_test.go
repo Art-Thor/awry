@@ -112,7 +112,7 @@ func TestRenderDetailShowsShellSafeExportPreview(t *testing.T) {
 	}
 
 	view := m.renderDetail(80)
-	if !strings.Contains(view, `export AWS_PROFILE='team"'"'s sandbox'`) {
+	if !strings.Contains(view, `export AWS_PROFILE='team'"'"'s sandbox'`) {
 		t.Fatalf("expected shell-safe export preview in detail view\n%s", view)
 	}
 }
