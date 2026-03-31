@@ -16,7 +16,7 @@ Browse, inspect, and switch AWS profiles without leaving your terminal.
 - **Validation-aware profile health** — surfaces invalid, expired, and missing-credential states
 - **Fuzzy search** — press `/` to filter profiles by name
 - **Active profile highlight** — shows which profile is currently set
-- **Shell integration** — install a shell wrapper so `awry` updates your current shell
+- **Shell integration** — install a shell wrapper for bash, zsh, or fish so `awry` updates your current shell
 - **Identity and session details** — see who you are and how long the active session has left
 
 ## Install
@@ -36,6 +36,19 @@ brew install Art-Thor/tap/awry
 ```bash
 go install github.com/Art-Thor/awry/cmd/awry@latest
 ```
+
+After `go install`, verify the binary is on your `PATH`:
+
+```bash
+command -v awry
+```
+
+If that prints nothing, add your Go bin directory to your shell `PATH`.
+
+- If `GOBIN` is set, use that directory
+- Otherwise use `$(go env GOPATH)/bin`
+
+On NixOS or Home Manager setups, `go install` can succeed while your interactive shell still does not include that directory on `PATH`.
 
 **From source:**
 
@@ -78,6 +91,12 @@ or:
 source ~/.bashrc
 ```
 
+or for fish:
+
+```fish
+source ~/.config/fish/config.fish
+```
+
 After that, verify the shell integration is active:
 
 ```bash
@@ -85,6 +104,8 @@ type awry
 ```
 
 You should see `awry is a function`.
+
+In fish, `type awry` should also show that `awry` resolves to a function rather than only a binary path.
 
 Now the normal flow works:
 
@@ -219,6 +240,12 @@ or:
 eval "$(command awry init zsh)"
 ```
 
+or for fish:
+
+```fish
+command awry init fish | source
+```
+
 That defines a shell function named `awry` which calls the real binary and automatically evaluates the emitted export command for `awry` and `awry use ...`.
 
 Use `command awry ...` if you ever want to bypass the wrapper and call the underlying binary directly.
@@ -229,7 +256,20 @@ Under the hood, the binary still emits:
 export AWS_PROFILE='your-profile'
 ```
 
+In fish, the equivalent emitted command is:
+
+```fish
+set -gx AWS_PROFILE 'your-profile'
+```
+
 Without the wrapper, a standalone binary cannot modify the parent shell, so use `eval "$(awry)"` or `eval "$(awry use <profile>)"` directly.
+
+In fish, use:
+
+```fish
+command awry | source
+command awry use my-profile | source
+```
 
 For role profiles, `awry` only sets `AWS_PROFILE`. The actual assume-role or SSO resolution still happens later in the AWS CLI or SDK.
 
@@ -273,7 +313,7 @@ awry setup-shell
 type awry
 ```
 
-If `type awry` does not say `awry is a function`, reload your shell config with `source ~/.zshrc` or `source ~/.bashrc`.
+If `type awry` does not show a shell function, reload your shell config with `source ~/.zshrc`, `source ~/.bashrc`, or `source ~/.config/fish/config.fish`.
 
 ### A profile shows `[INVALID]` in the TUI
 
@@ -321,6 +361,12 @@ or:
 awry setup-shell bash
 ```
 
+or:
+
+```fish
+awry setup-shell fish
+```
+
 ### I only want to test once without changing shell config
 
 Use:
@@ -334,6 +380,30 @@ or:
 ```bash
 eval "$(command awry use my-profile)"
 ```
+
+For fish:
+
+```fish
+command awry use my-profile | source
+```
+
+### `go install` succeeded but `awry` is not found
+
+That usually means your Go bin directory is not on `PATH` for your current shell.
+
+Check:
+
+```bash
+go env GOPATH
+command -v awry
+```
+
+Typical Go binary locations:
+
+- `$GOBIN`
+- `$(go env GOPATH)/bin`
+
+On NixOS and Home Manager setups, make sure that directory is added to the interactive shell `PATH`, including fish if that is the shell you actually use.
 
 ### How do I know which profile is active right now?
 
@@ -373,6 +443,11 @@ source ~/.zshrc
 ```bash
 echo 'eval "$(command awry init bash)"' >> ~/.bashrc
 source ~/.bashrc
+```
+
+```fish
+printf '%s\n' 'command awry init fish | source' >> ~/.config/fish/config.fish
+source ~/.config/fish/config.fish
 ```
 
 ## License
