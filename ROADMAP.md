@@ -7,7 +7,7 @@ The `awry` roadmap is organized by release milestones. This is not a week-by-wee
 - Status: shipped in `v0.2.x`
 - `awry use <profile>` command that prints a shell export and works with `eval`
 - Shell-safe interactive output so TUI/status rendering never leaks ANSI sequences into command substitution
-- Explicit shell integration flow: selecting a profile updates the current shell through `eval $(awry)` or the `awry init` shell wrapper for bash/zsh
+- Explicit shell integration flow: selecting a profile updates the current shell through `eval $(awry)` or the `awry init` shell wrapper for bash, zsh, and fish
 - Role profiles switch cleanly via `AWS_PROFILE`, with docs that clarify assume-role happens later in AWS CLI/SDK
 - Active profile pinned to the top of the TUI list
 - Active profile badge visible in the list
@@ -16,7 +16,7 @@ The `awry` roadmap is organized by release milestones. This is not a week-by-wee
 Delivered in `v0.2.x`:
 
 - shell-safe export generation shared across TUI and CLI commands
-- `awry init [bash|zsh]` shell wrapper setup for real in-shell profile switching
+- `awry init [bash|zsh|fish]` shell wrapper setup for real in-shell profile switching
 - updated README and release checks for shell-switching workflows
 
 ## v0.3.0 — STS Identity
