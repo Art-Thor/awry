@@ -14,7 +14,7 @@ func detectShell(args []string) (string, error) {
 	if len(args) == 1 {
 		shell := normalizeShell(args[0])
 		if shell == "" {
-			return "", fmt.Errorf("unsupported shell %q (expected bash or zsh)", args[0])
+			return "", fmt.Errorf("unsupported shell %q (expected bash, zsh, or fish)", args[0])
 		}
 		return shell, nil
 	}
@@ -31,7 +31,7 @@ func detectShell(args []string) (string, error) {
 		return shell, nil
 	}
 
-	return "", fmt.Errorf("could not detect shell, pass one explicitly: awry init bash or awry init zsh")
+	return "", fmt.Errorf("could not detect shell, pass one explicitly: awry init bash, awry init zsh, or awry init fish")
 }
 
 func normalizeShell(shell string) string {
@@ -41,7 +41,7 @@ func normalizeShell(shell string) string {
 
 	base := strings.ToLower(filepath.Base(shell))
 	switch base {
-	case "bash", "zsh":
+	case "bash", "zsh", "fish":
 		return base
 	default:
 		return ""

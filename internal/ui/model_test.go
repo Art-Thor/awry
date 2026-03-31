@@ -2,6 +2,7 @@ package ui
 
 import (
 	"errors"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -114,6 +115,24 @@ func TestRenderDetailShowsShellSafeExportPreview(t *testing.T) {
 	view := m.renderDetail(80)
 	if !strings.Contains(view, `export AWS_PROFILE='team'"'"'s sandbox'`) {
 		t.Fatalf("expected shell-safe export preview in detail view\n%s", view)
+	}
+}
+
+func TestRenderDetailShowsFishExportPreview(t *testing.T) {
+	original := os.Getenv("AWRY_SHELL")
+	_ = os.Setenv("AWRY_SHELL", "fish")
+	t.Cleanup(func() {
+		_ = os.Setenv("AWRY_SHELL", original)
+	})
+
+	m := Model{
+		profiles: []models.Profile{{Name: "team's sandbox", Type: models.ProfileTypeStatic, HasCredentials: true}},
+		filtered: []models.Profile{{Name: "team's sandbox", Type: models.ProfileTypeStatic, HasCredentials: true}},
+	}
+
+	view := m.renderDetail(80)
+	if !strings.Contains(view, `set -gx AWS_PROFILE 'team\'s sandbox'`) {
+		t.Fatalf("expected fish export preview in detail view\n%s", view)
 	}
 }
 

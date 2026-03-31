@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -25,7 +26,7 @@ var useCmd = &cobra.Command{
 			return err
 		}
 
-		fmt.Println(app.ExportCommand(result.Profile.Name))
+		fmt.Println(app.ExportCommandForShell(result.Profile.Name, os.Getenv("AWRY_SHELL")))
 		return nil
 	},
 }

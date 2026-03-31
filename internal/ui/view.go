@@ -9,6 +9,7 @@ import (
 
 	"github.com/Art-Thor/awry/pkg/models"
 	"github.com/Art-Thor/awry/pkg/shellenv"
+	"os"
 )
 
 // inlineBadge returns the inline type badge string for a profile.
@@ -218,7 +219,7 @@ func row(label, value string) string {
 }
 
 func exportCommand(profile string) string {
-	return shellenv.ExportCommand(profile)
+	return shellenv.ExportCommandForShell(profile, os.Getenv("AWRY_SHELL"))
 }
 
 func badgeFor(t models.ProfileType) string {

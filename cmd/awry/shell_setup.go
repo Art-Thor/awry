@@ -17,12 +17,17 @@ func shellRCPath(homeDir, shell string) string {
 	fileName := ".bashrc"
 	if shell == "zsh" {
 		fileName = ".zshrc"
+	} else if shell == "fish" {
+		return filepath.Join(homeDir, ".config", "fish", "config.fish")
 	}
 
 	return filepath.Join(homeDir, fileName)
 }
 
 func shellSetupLine(shell string) string {
+	if shell == "fish" {
+		return "command awry init fish | source"
+	}
 	return fmt.Sprintf(`eval "$(command awry init %s)"`, shell)
 }
 
@@ -70,6 +75,9 @@ func installShellSetupLine(rcPath, line, comment string) (bool, error) {
 	}
 
 	updated := text + block
+	if err := os.MkdirAll(filepath.Dir(rcPath), 0o755); err != nil {
+		return false, fmt.Errorf("creating %s: %w", filepath.Dir(rcPath), err)
+	}
 	if err := os.WriteFile(rcPath, []byte(updated), 0o644); err != nil {
 		return false, fmt.Errorf("writing %s: %w", rcPath, err)
 	}

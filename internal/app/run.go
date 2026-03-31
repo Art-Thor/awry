@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/Art-Thor/awry/internal/ui"
+	"github.com/Art-Thor/awry/pkg/shellenv"
 )
 
 // RunTUI launches the interactive profile picker and prints the export
@@ -25,9 +26,10 @@ func RunTUI() error {
 
 	final := result.(ui.Model)
 	if sel := final.SelectedProfile(); sel != nil {
-		export := ExportCommand(sel.Name)
+		shell := os.Getenv("AWRY_SHELL")
+		export := ExportCommandForShell(sel.Name, shell)
 		if stdoutIsTerminal() {
-			fmt.Fprintf(os.Stderr, "\nSelected: %s\nTo let `awry` update your shell automatically, run once:\n  awry setup-shell\nFor this selection only, run:\n  %s\n\n", sel.Name, selectionHintCommand(sel.Name))
+			fmt.Fprintf(os.Stderr, "\nSelected: %s\nTo let `awry` update your shell automatically, run once:\n  awry setup-shell\nFor this selection only, run:\n  %s\n\n", sel.Name, selectionHintCommand(sel.Name, shell))
 		} else {
 			fmt.Fprintf(os.Stderr, "\nSelected: %s\n\n", sel.Name)
 		}
@@ -46,6 +48,10 @@ func stdoutIsTerminal() bool {
 	return info.Mode()&os.ModeCharDevice != 0
 }
 
-func selectionHintCommand(profile string) string {
-	return fmt.Sprintf("eval %q", ExportCommand(profile))
+func selectionHintCommand(profile, shell string) string {
+	if shell == shellenv.ShellFish {
+		return fmt.Sprintf("%s | source", ExportCommandForShell(profile, shell))
+	}
+
+	return fmt.Sprintf("eval %q", ExportCommandForShell(profile, shell))
 }
