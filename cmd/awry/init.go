@@ -8,8 +8,8 @@ import (
 )
 
 var initCmd = &cobra.Command{
-	Use:   "init [bash|zsh]",
-	Short: "Print shell wrapper setup for bash or zsh",
+	Use:   "init [bash|zsh|fish]",
+	Short: "Print shell wrapper setup for bash, zsh, or fish",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		shell, err := detectShell(args)
@@ -23,7 +23,7 @@ var initCmd = &cobra.Command{
 }
 
 var setupShellCmd = &cobra.Command{
-	Use:   "setup-shell [bash|zsh]",
+	Use:   "setup-shell [bash|zsh|fish]",
 	Short: "Install shell setup so `awry` updates your current shell",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {

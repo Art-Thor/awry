@@ -15,7 +15,8 @@ func TestNormalizeShell(t *testing.T) {
 	}{
 		{name: "bash name", input: "bash", want: "bash"},
 		{name: "zsh path", input: "/bin/zsh", want: "zsh"},
-		{name: "unsupported", input: "fish", want: ""},
+		{name: "fish path", input: "/run/current-system/sw/bin/fish", want: "fish"},
+		{name: "unsupported", input: "nu", want: ""},
 		{name: "empty", input: "", want: ""},
 	}
 
@@ -46,6 +47,16 @@ func TestDetectShell(t *testing.T) {
 		}
 	})
 
+	t.Run("explicit fish arg works", func(t *testing.T) {
+		shell, err := detectShell([]string{"fish"})
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if shell != "fish" {
+			t.Fatalf("expected fish, got %q", shell)
+		}
+	})
+
 	t.Run("env fallback", func(t *testing.T) {
 		_ = os.Setenv("AWRY_SHELL", "")
 		_ = os.Setenv("SHELL", "/bin/bash")
@@ -59,9 +70,22 @@ func TestDetectShell(t *testing.T) {
 		}
 	})
 
+	t.Run("fish env fallback", func(t *testing.T) {
+		_ = os.Setenv("AWRY_SHELL", "")
+		_ = os.Setenv("SHELL", "/run/current-system/sw/bin/fish")
+
+		shell, err := detectShell(nil)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if shell != "fish" {
+			t.Fatalf("expected fish, got %q", shell)
+		}
+	})
+
 	t.Run("unsupported shell errors", func(t *testing.T) {
-		_ = os.Setenv("AWRY_SHELL", "fish")
-		_ = os.Setenv("SHELL", "fish")
+		_ = os.Setenv("AWRY_SHELL", "nu")
+		_ = os.Setenv("SHELL", "nu")
 
 		if _, err := detectShell(nil); err == nil {
 			t.Fatal("expected error")
@@ -86,6 +110,23 @@ func TestShellInitScript(t *testing.T) {
 	}
 }
 
+func TestShellInitScriptFish(t *testing.T) {
+	script := shellInitScript("fish")
+
+	checks := []string{
+		"function awry",
+		`env AWRY_SHELL=fish command awry $argv`,
+		`eval $_awry_output`,
+		`case '' use`,
+	}
+
+	for _, check := range checks {
+		if !strings.Contains(script, check) {
+			t.Fatalf("expected fish script to contain %q", check)
+		}
+	}
+}
+
 func TestShellRCPath(t *testing.T) {
 	if got := shellRCPath("/tmp/home", "bash"); got != "/tmp/home/.bashrc" {
 		t.Fatalf("unexpected bash rc path: %q", got)
@@ -94,11 +135,18 @@ func TestShellRCPath(t *testing.T) {
 	if got := shellRCPath("/tmp/home", "zsh"); got != "/tmp/home/.zshrc" {
 		t.Fatalf("unexpected zsh rc path: %q", got)
 	}
+
+	if got := shellRCPath("/tmp/home", "fish"); got != "/tmp/home/.config/fish/config.fish" {
+		t.Fatalf("unexpected fish rc path: %q", got)
+	}
 }
 
 func TestShellSetupLine(t *testing.T) {
 	if got := shellSetupLine("zsh"); got != `eval "$(command awry init zsh)"` {
 		t.Fatalf("unexpected setup line: %q", got)
+	}
+	if got := shellSetupLine("fish"); got != `command awry init fish | source` {
+		t.Fatalf("unexpected fish setup line: %q", got)
 	}
 }
 
@@ -129,6 +177,30 @@ func TestInstallShellSetup(t *testing.T) {
 		}
 		if !strings.Contains(text, shellSetupLine("zsh")) {
 			t.Fatalf("expected setup line in %q", text)
+		}
+	})
+
+	t.Run("creates fish config entry", func(t *testing.T) {
+		homeDir := t.TempDir()
+		rcPath := filepath.Join(homeDir, ".config", "fish", "config.fish")
+
+		result, err := installShellSetup(homeDir, "fish")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if result.PrimaryPath != rcPath {
+			t.Fatalf("unexpected primary path: %q", result.PrimaryPath)
+		}
+		if result.ExtraPath != "" {
+			t.Fatalf("expected no extra path for fish, got %q", result.ExtraPath)
+		}
+
+		content, err := os.ReadFile(rcPath)
+		if err != nil {
+			t.Fatalf("reading fish config: %v", err)
+		}
+		if !strings.Contains(string(content), shellSetupLine("fish")) {
+			t.Fatalf("expected fish setup line in %q", string(content))
 		}
 	})
 
