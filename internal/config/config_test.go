@@ -18,8 +18,8 @@ func TestLoadMissingConfig(t *testing.T) {
 	if gotPath != path {
 		t.Fatalf("Load() path = %q, want %q", gotPath, path)
 	}
-	if len(cfg.Favorites) != 0 {
-		t.Fatalf("Load() favorites = %v, want empty", cfg.Favorites)
+	if len(cfg.Favorites) != 0 || len(cfg.Recents) != 0 {
+		t.Fatalf("Load() config = %+v, want empty favorites and recents", cfg)
 	}
 }
 
@@ -27,7 +27,7 @@ func TestSaveAndLoadRoundTrip(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "nested", "config.yaml")
 	t.Setenv(envConfigPath, path)
 
-	want := Config{Favorites: []string{"prod-admin", "sandbox"}}
+	want := Config{Favorites: []string{"prod-admin", "sandbox"}, Recents: []string{"sandbox", "dev"}}
 	if err := Save(want, path); err != nil {
 		t.Fatalf("Save() unexpected error: %v", err)
 	}

@@ -16,6 +16,7 @@ Browse, inspect, and switch AWS profiles without leaving your terminal.
 - **Validation-aware profile health** — surfaces invalid, expired, and missing-credential states
 - **Fuzzy search** — press `/` to filter profiles by name
 - **Active profile highlight** — shows which profile is currently set
+- **Favorites** — press `p` in the TUI to pin frequently used profiles near the top
 - **Shell integration** — install a shell wrapper for bash, zsh, or fish so `awry` updates your current shell
 - **Identity and session details** — see who you are and how long the active session has left
 
@@ -204,6 +205,7 @@ command awry list
 |-----|--------|
 | `↑` `↓` / `j` `k` | Navigate profiles |
 | `Enter` | Select profile |
+| `p` | Toggle favorite |
 | `r` | Refresh session and identity |
 | `?` | Open keyboard help |
 | `/` | Fuzzy search |
@@ -282,6 +284,7 @@ If the selected profile is currently active, the detail pane also shows live run
 
 For any highlighted profile, the detail pane also shows:
 
+- favorite status
 - normalized profile type
 - health status
 - region

@@ -70,6 +70,46 @@ func (m *Model) pinFavoritesAfterActive() {
 	m.profiles = append(prefix, append(favorites, others[start:]...)...)
 }
 
+func (m *Model) pinRecentsAfterFavorites() {
+	if len(m.profiles) == 0 || len(m.recents) == 0 {
+		return
+	}
+
+	recentRank := make(map[string]int, len(m.recents))
+	for i, name := range m.recents {
+		recentRank[name] = i
+	}
+
+	start := 0
+	if m.currentProfile != "" && m.profiles[0].Name == m.currentProfile {
+		start = 1
+	}
+	for start < len(m.profiles) && m.isFavorite(m.profiles[start].Name) {
+		start++
+	}
+
+	recents := make([]models.Profile, 0)
+	others := make([]models.Profile, 0, len(m.profiles))
+	for i, profile := range m.profiles {
+		if i < start {
+			others = append(others, profile)
+			continue
+		}
+		if _, ok := recentRank[profile.Name]; ok {
+			recents = append(recents, profile)
+		} else {
+			others = append(others, profile)
+		}
+	}
+
+	sort.SliceStable(recents, func(i, j int) bool {
+		return recentRank[recents[i].Name] < recentRank[recents[j].Name]
+	})
+
+	prefix := append([]models.Profile{}, others[:start]...)
+	m.profiles = append(prefix, append(recents, others[start:]...)...)
+}
+
 func (m Model) activeProfile() (models.Profile, bool) {
 	if m.currentProfile == "" {
 		return models.Profile{}, false

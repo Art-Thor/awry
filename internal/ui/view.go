@@ -103,7 +103,7 @@ func (m Model) renderList(width int) string {
 
 	for i := start; i < end; i++ {
 		p := m.filtered[i]
-		name := favoriteMarker(m.isFavorite(p.Name)) + p.Name + inlineBadge(p.Type) + m.listHealthBadge(p)
+		name := recentMarker(m.isRecent(p.Name)) + favoriteMarker(m.isFavorite(p.Name)) + p.Name + inlineBadge(p.Type) + m.listHealthBadge(p)
 
 		isActive := p.Name == m.currentProfile
 		if isActive {
@@ -143,6 +143,7 @@ func (m Model) renderDetail(width int) string {
 	b.WriteString(detailTitleStyle.Render(p.Name))
 	b.WriteString("\n\n")
 	b.WriteString(row("Favorite", yesNo(m.isFavorite(p.Name))))
+	b.WriteString(row("Recent", yesNo(m.isRecent(p.Name))))
 	b.WriteString(row("Type", badgeFor(p.Type)))
 	b.WriteString(row("Health", m.profileHealthValue(p)))
 	b.WriteString(row("Region", p.DisplayRegion()))
@@ -189,6 +190,7 @@ func (m Model) renderHelpOverlay() string {
 		"",
 		helpKeyStyle.Render("j / k, up / down") + helpDescStyle.Render("Move through profiles"),
 		helpKeyStyle.Render("Enter") + helpDescStyle.Render("Select the highlighted profile"),
+		helpKeyStyle.Render("p") + helpDescStyle.Render("Toggle favorite on the highlighted profile"),
 		helpKeyStyle.Render("/") + helpDescStyle.Render("Start fuzzy search"),
 		helpKeyStyle.Render("r") + helpDescStyle.Render("Refresh active session and identity"),
 		helpKeyStyle.Render("?") + helpDescStyle.Render("Toggle this help overlay"),
@@ -244,6 +246,13 @@ func (m Model) renderStatusBar() string {
 		parts = append(parts, "↑↓/jk navigate", "Enter select profile", "p favorite", "r refresh", "? help", "/ search", "q quit")
 	}
 	return statusBarStyle.Render(strings.Join(parts, "  │  "))
+}
+
+func recentMarker(isRecent bool) string {
+	if isRecent {
+		return "> "
+	}
+	return "  "
 }
 
 func favoriteMarker(isFavorite bool) string {
