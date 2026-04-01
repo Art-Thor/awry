@@ -112,6 +112,14 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.identity = nil
 		m.identityErr = nil
 		return m, m.refreshActiveRuntimeCmd()
+	case "p":
+		if len(m.filtered) == 0 {
+			return m, nil
+		}
+		if err := m.toggleFavorite(m.filtered[m.cursor].Name); err != nil {
+			return m, nil
+		}
+		return m, nil
 	case "up", "k":
 		if m.cursor > 0 {
 			m.cursor--
