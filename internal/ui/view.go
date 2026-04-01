@@ -103,7 +103,7 @@ func (m Model) renderList(width int) string {
 
 	for i := start; i < end; i++ {
 		p := m.filtered[i]
-		name := p.Name + inlineBadge(p.Type) + m.listHealthBadge(p)
+		name := favoriteMarker(m.isFavorite(p.Name)) + p.Name + inlineBadge(p.Type) + m.listHealthBadge(p)
 
 		isActive := p.Name == m.currentProfile
 		if isActive {
@@ -142,6 +142,7 @@ func (m Model) renderDetail(width int) string {
 
 	b.WriteString(detailTitleStyle.Render(p.Name))
 	b.WriteString("\n\n")
+	b.WriteString(row("Favorite", yesNo(m.isFavorite(p.Name))))
 	b.WriteString(row("Type", badgeFor(p.Type)))
 	b.WriteString(row("Health", m.profileHealthValue(p)))
 	b.WriteString(row("Region", p.DisplayRegion()))
@@ -240,7 +241,21 @@ func (m Model) renderStatusBar() string {
 	if m.searching {
 		parts = append(parts, "Esc close search", "Enter confirm")
 	} else {
-		parts = append(parts, "↑↓/jk navigate", "Enter select profile", "r refresh", "? help", "/ search", "q quit")
+		parts = append(parts, "↑↓/jk navigate", "Enter select profile", "p favorite", "r refresh", "? help", "/ search", "q quit")
 	}
 	return statusBarStyle.Render(strings.Join(parts, "  │  "))
+}
+
+func favoriteMarker(isFavorite bool) string {
+	if isFavorite {
+		return "* "
+	}
+	return "  "
+}
+
+func yesNo(v bool) string {
+	if v {
+		return "Yes"
+	}
+	return "No"
 }

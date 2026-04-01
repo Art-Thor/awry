@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/Art-Thor/awry/pkg/models"
@@ -35,6 +36,38 @@ func (m *Model) pinActiveToTop() {
 			return
 		}
 	}
+}
+
+func (m *Model) pinFavoritesAfterActive() {
+	if len(m.profiles) == 0 || len(m.favorites) == 0 {
+		return
+	}
+
+	start := 0
+	if m.currentProfile != "" && m.profiles[0].Name == m.currentProfile {
+		start = 1
+	}
+
+	favorites := make([]models.Profile, 0)
+	others := make([]models.Profile, 0, len(m.profiles))
+	for i, profile := range m.profiles {
+		if i < start {
+			others = append(others, profile)
+			continue
+		}
+		if m.isFavorite(profile.Name) {
+			favorites = append(favorites, profile)
+		} else {
+			others = append(others, profile)
+		}
+	}
+
+	sort.SliceStable(favorites, func(i, j int) bool {
+		return favorites[i].Name < favorites[j].Name
+	})
+
+	prefix := append([]models.Profile{}, others[:start]...)
+	m.profiles = append(prefix, append(favorites, others[start:]...)...)
 }
 
 func (m Model) activeProfile() (models.Profile, bool) {
