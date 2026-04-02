@@ -102,6 +102,11 @@ func (m Model) renderList(width int) string {
 	}
 
 	for i := start; i < end; i++ {
+		if header := m.sectionHeader(i); header != "" {
+			b.WriteString(sectionHeaderStyle.Render(header))
+			b.WriteString("\n")
+		}
+
 		p := m.filtered[i]
 		name := recentMarker(m.isRecent(p.Name)) + favoriteMarker(m.isFavorite(p.Name)) + p.Name + inlineBadge(p.Type) + m.listHealthBadge(p)
 
@@ -129,6 +134,42 @@ func (m Model) renderList(width int) string {
 	}
 
 	return b.String()
+}
+
+func (m Model) sectionHeader(index int) string {
+	if m.searching || index < 0 || index >= len(m.filtered) {
+		return ""
+	}
+
+	current := m.filtered[index]
+	if index == 0 {
+		switch {
+		case current.Name == m.currentProfile:
+			return "Current"
+		case m.isFavorite(current.Name):
+			return "Favorites"
+		case m.isRecent(current.Name):
+			return "Recent"
+		default:
+			return "All Profiles"
+		}
+	}
+
+	previous := m.filtered[index-1]
+	if current.Name == m.currentProfile {
+		return ""
+	}
+	if m.isFavorite(current.Name) && !m.isFavorite(previous.Name) {
+		return "Favorites"
+	}
+	if m.isRecent(current.Name) && !m.isRecent(previous.Name) && !m.isFavorite(current.Name) {
+		return "Recent"
+	}
+	if !m.isFavorite(current.Name) && !m.isRecent(current.Name) && (m.isFavorite(previous.Name) || m.isRecent(previous.Name) || previous.Name == m.currentProfile) {
+		return "All Profiles"
+	}
+
+	return ""
 }
 
 func (m Model) renderDetail(width int) string {
