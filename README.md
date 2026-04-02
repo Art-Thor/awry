@@ -17,6 +17,7 @@ Browse, inspect, and switch AWS profiles without leaving your terminal.
 - **Fuzzy search** — press `/` to filter profiles by name
 - **Active profile highlight** — shows which profile is currently set
 - **Favorites** — press `p` in the TUI to pin frequently used profiles near the top
+- **Recents** — recently selected profiles stay close at hand automatically
 - **Shell integration** — install a shell wrapper for bash, zsh, or fish so `awry` updates your current shell
 - **Identity and session details** — see who you are and how long the active session has left
 
@@ -115,6 +116,8 @@ awry
 awry current
 echo "$AWS_PROFILE"
 ```
+
+If you start using favorites, `awry` stores them in `~/.config/awry/config.yaml` and remembers recently selected profiles there too.
 
 ## First-Time Setup
 
@@ -285,11 +288,21 @@ If the selected profile is currently active, the detail pane also shows live run
 For any highlighted profile, the detail pane also shows:
 
 - favorite status
+- recent status
 - normalized profile type
 - health status
 - region
 - `source_profile` and `role_arn` when present
 - the export command that `Enter` will emit
+
+In the list view, `awry` keeps profiles ordered as:
+
+- current profile
+- favorites
+- recent profiles
+- all other profiles
+
+When that ordering is visible, the list shows section headers so the groups are easy to scan.
 
 Press `r` in the TUI to refresh those runtime details after re-authenticating or re-running `aws sso login`.
 Press `?` in the TUI to see the full keyboard reference without leaving the app.
@@ -418,6 +431,17 @@ echo "$AWS_PROFILE"
 ```
 
 ## Configuration
+
+`awry` stores app-specific state in:
+
+```bash
+~/.config/awry/config.yaml
+```
+
+Right now that config file is used for:
+
+- favorites
+- recent profiles
 
 awry respects these environment variables:
 
