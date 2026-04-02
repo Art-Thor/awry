@@ -169,6 +169,12 @@ var (
 	helpFooterStyle = lipgloss.NewStyle().
 			Foreground(colorSecondary)
 
+	sectionHeaderStyle = lipgloss.NewStyle().
+				Foreground(colorSecondary).
+				Bold(true).
+				PaddingLeft(1).
+				MarginTop(1)
+
 	// Divider between active profile and the rest
 	dividerStyle = lipgloss.NewStyle().
 			Foreground(colorMuted)
