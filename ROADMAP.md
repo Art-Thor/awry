@@ -50,9 +50,18 @@ Delivered in `v0.4.0`:
 
 ## v0.5.0 — Favorites and Recents
 
+- Status: in progress
 - Pin or unpin profiles with `p`, persisted in `~/.config/awry/config.yaml`
 - Track recently used profiles and show them in a dedicated section
 - Config layer via Viper
+
+Delivered so far in `v0.5.x`:
+
+- persisted awry config via Viper
+- favorite toggling from the TUI with `p`
+- recent profile tracking on selection
+- current/favorites/recent/all ordering in the list
+- section headers in the TUI list for grouped profiles
 
 ## v0.6.0 — Safe Mode
 
