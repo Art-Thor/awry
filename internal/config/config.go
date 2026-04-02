@@ -13,6 +13,7 @@ const envConfigPath = "AWRY_CONFIG_PATH"
 
 type Config struct {
 	Favorites []string `mapstructure:"favorites"`
+	Recents   []string `mapstructure:"recents"`
 }
 
 func Load() (Config, string, error) {
@@ -49,6 +50,7 @@ func Save(cfg Config, path string) error {
 	v.SetConfigFile(path)
 	v.SetConfigType("yaml")
 	v.Set("favorites", cfg.Favorites)
+	v.Set("recents", cfg.Recents)
 
 	if err := v.WriteConfigAs(path); err != nil {
 		return fmt.Errorf("writing config: %w", err)

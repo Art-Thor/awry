@@ -36,6 +36,7 @@ type Model struct {
 	sessionInfo    *session.Info
 	sessionErr     error
 	favorites      map[string]struct{}
+	recents        []string
 	configPath     string
 }
 
@@ -65,9 +66,11 @@ func New() (Model, error) {
 	for _, favorite := range cfg.Favorites {
 		m.favorites[favorite] = struct{}{}
 	}
+	m.recents = append([]string(nil), cfg.Recents...)
 
 	m.pinActiveToTop()
 	m.pinFavoritesAfterActive()
+	m.pinRecentsAfterFavorites()
 	m.filtered = m.profiles
 	return m, nil
 }
@@ -75,6 +78,15 @@ func New() (Model, error) {
 func (m Model) isFavorite(name string) bool {
 	_, ok := m.favorites[name]
 	return ok
+}
+
+func (m Model) isRecent(name string) bool {
+	for _, recent := range m.recents {
+		if recent == name {
+			return true
+		}
+	}
+	return false
 }
 
 func (m *Model) toggleFavorite(profileName string) error {
@@ -94,6 +106,32 @@ func (m *Model) toggleFavorite(profileName string) error {
 
 	m.pinActiveToTop()
 	m.pinFavoritesAfterActive()
+	m.pinRecentsAfterFavorites()
+	m.applyFilter()
+	m.restoreCursor(profileName)
+	return nil
+}
+
+func (m *Model) recordRecent(profileName string) error {
+	updated := []string{profileName}
+	for _, recent := range m.recents {
+		if recent == profileName {
+			continue
+		}
+		updated = append(updated, recent)
+		if len(updated) == 5 {
+			break
+		}
+	}
+	m.recents = updated
+
+	if err := m.saveConfig(); err != nil {
+		return err
+	}
+
+	m.pinActiveToTop()
+	m.pinFavoritesAfterActive()
+	m.pinRecentsAfterFavorites()
 	m.applyFilter()
 	m.restoreCursor(profileName)
 	return nil
@@ -106,7 +144,7 @@ func (m Model) saveConfig() error {
 	}
 	sort.Strings(keys)
 
-	return config.Save(config.Config{Favorites: keys}, m.configPath)
+	return config.Save(config.Config{Favorites: keys, Recents: m.recents}, m.configPath)
 }
 
 func (m *Model) restoreCursor(profileName string) {

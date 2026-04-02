@@ -134,6 +134,7 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "enter":
 		if len(m.filtered) > 0 {
 			p := m.filtered[m.cursor]
+			_ = m.recordRecent(p.Name)
 			m.selected = &p
 			return m, tea.Quit
 		}
