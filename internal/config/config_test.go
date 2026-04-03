@@ -27,7 +27,7 @@ func TestSaveAndLoadRoundTrip(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "nested", "config.yaml")
 	t.Setenv(envConfigPath, path)
 
-	want := Config{Favorites: []string{"prod-admin", "sandbox"}, Recents: []string{"sandbox", "dev"}}
+	want := Config{Favorites: []string{"prod-admin", "sandbox"}, Recents: []string{"sandbox", "dev"}, RiskPatterns: []string{"critical"}}
 	if err := Save(want, path); err != nil {
 		t.Fatalf("Save() unexpected error: %v", err)
 	}

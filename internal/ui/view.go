@@ -108,7 +108,7 @@ func (m Model) renderList(width int) string {
 		}
 
 		p := m.filtered[i]
-		name := recentMarker(m.isRecent(p.Name)) + favoriteMarker(m.isFavorite(p.Name)) + p.Name + inlineBadge(p.Type) + m.listHealthBadge(p)
+		name := riskMarker(m.isRiskyProfile(p.Name)) + recentMarker(m.isRecent(p.Name)) + favoriteMarker(m.isFavorite(p.Name)) + p.Name + inlineBadge(p.Type) + m.listHealthBadge(p)
 
 		isActive := p.Name == m.currentProfile
 		if isActive {
@@ -185,6 +185,7 @@ func (m Model) renderDetail(width int) string {
 	b.WriteString("\n\n")
 	b.WriteString(row("Favorite", yesNo(m.isFavorite(p.Name))))
 	b.WriteString(row("Recent", yesNo(m.isRecent(p.Name))))
+	b.WriteString(row("Risk", m.riskLabel(p.Name)))
 	b.WriteString(row("Type", badgeFor(p.Type)))
 	b.WriteString(row("Health", m.profileHealthValue(p)))
 	b.WriteString(row("Region", p.DisplayRegion()))
@@ -292,6 +293,13 @@ func (m Model) renderStatusBar() string {
 func recentMarker(isRecent bool) string {
 	if isRecent {
 		return "> "
+	}
+	return "  "
+}
+
+func riskMarker(isRisky bool) string {
+	if isRisky {
+		return "! "
 	}
 	return "  "
 }
