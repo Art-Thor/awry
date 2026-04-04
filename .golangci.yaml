@@ -1,0 +1,41 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - copyloopvar
+    - errname
+    - gosec
+    - noctx
+    - nolintlint
+    - prealloc
+    - unconvert
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+  gosec:
+    excludes:
+      - G104
+  govet:
+    enable-all: true
+  nolintlint:
+    require-explanation: true
+    require-specific: true
+
+issues:
+  exclude-use-case: should
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+output:
+  format: github
+  print-issued-line: false
