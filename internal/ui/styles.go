@@ -9,6 +9,7 @@ var (
 	colorSuccess   = lipgloss.Color("#10B981") // green
 	colorWarning   = lipgloss.Color("#F59E0B") // amber
 	colorDanger    = lipgloss.Color("#EF4444") // red
+	colorRisk      = lipgloss.Color("#FB7185") // rose
 	colorInfo      = lipgloss.Color("#3B82F6") // blue
 	colorMuted     = lipgloss.Color("#4B5563")
 	colorBg        = lipgloss.Color("#1F2937")

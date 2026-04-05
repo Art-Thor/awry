@@ -20,24 +20,25 @@ var (
 
 // Model is the top-level Bubble Tea model.
 type Model struct {
-	profiles       []models.Profile
-	filtered       []models.Profile
-	cursor         int
-	currentProfile string
-	searchQuery    string
-	searching      bool
-	selected       *models.Profile
-	width          int
-	height         int
-	quitting       bool
-	helpVisible    bool
-	identity       *identity.Identity
-	identityErr    error
-	sessionInfo    *session.Info
-	sessionErr     error
-	favorites      map[string]struct{}
-	recents        []string
-	configPath     string
+	profiles           []models.Profile
+	filtered           []models.Profile
+	cursor             int
+	currentProfile     string
+	searchQuery        string
+	searching          bool
+	selected           *models.Profile
+	width              int
+	height             int
+	quitting           bool
+	helpVisible        bool
+	identity           *identity.Identity
+	identityErr        error
+	sessionInfo        *session.Info
+	sessionErr         error
+	favorites          map[string]struct{}
+	recents            []string
+	configRiskPatterns []string
+	configPath         string
 }
 
 // SelectedProfile returns the profile the user chose (nil if none).
@@ -67,6 +68,7 @@ func New() (Model, error) {
 		m.favorites[favorite] = struct{}{}
 	}
 	m.recents = append([]string(nil), cfg.Recents...)
+	m.configRiskPatterns = append([]string(nil), cfg.RiskPatterns...)
 
 	m.pinActiveToTop()
 	m.pinFavoritesAfterActive()
