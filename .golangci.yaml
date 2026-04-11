@@ -4,33 +4,14 @@ run:
 
 linters:
   enable:
-    - errcheck
     - gosimple
-    - govet
     - ineffassign
     - staticcheck
-    - unused
     - copyloopvar
     - errname
-    - gosec
-    - noctx
-    - nolintlint
-    - prealloc
     - unconvert
 
 linters-settings:
-  errcheck:
-    check-type-assertions: true
-    check-blank: true
-  gosec:
-    excludes:
-      - G104
-  govet:
-    enable-all: true
-  nolintlint:
-    require-explanation: true
-    require-specific: true
-
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0

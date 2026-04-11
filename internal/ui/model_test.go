@@ -300,6 +300,7 @@ func TestToggleFavoritePreservesSafeModeConfig(t *testing.T) {
 		Favorites:          []string{"prod-admin"},
 		ProductionPatterns: []string{"prod", "critical"},
 		ConfirmProduction:  false,
+		RiskPatterns:       []string{"prod", "critical"},
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("config.Load() = %+v, want %+v", got, want)
