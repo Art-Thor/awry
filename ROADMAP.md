@@ -65,10 +65,17 @@ Delivered so far in `v0.5.x`:
 
 ## v0.6.0 — Safe Mode
 
+- Status: shipped in `v0.6.x`
 - Configurable production patterns such as `prod`, `production`, and `live`
-- Visual warning banner on production profiles
+- Visual warning banner on production-like profiles
 - Optional confirmation before switching to production
 - Color-coded danger levels
+
+Delivered in `v0.6.x`:
+
+- config-driven production profile matching via `~/.config/awry/config.yaml`
+- Safe Mode badges in the profile list and warning banners in the detail pane
+- confirmation step before switching production-like profiles from the TUI
 
 ## v0.7.0 — SSO Login
 

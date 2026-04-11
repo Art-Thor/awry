@@ -3,12 +3,15 @@ package ui
 import (
 	"errors"
 	"os"
+	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/Art-Thor/awry/internal/config"
 	"github.com/Art-Thor/awry/internal/identity"
 	"github.com/Art-Thor/awry/internal/session"
 	"github.com/Art-Thor/awry/pkg/models"
@@ -178,6 +181,23 @@ func TestRenderDetailShowsIdentityError(t *testing.T) {
 	}
 }
 
+func TestRenderDetailShowsSafeModeBanner(t *testing.T) {
+	m := Model{
+		profiles:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		filtered:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		productionPatterns:  []string{"prod", "production", "live"},
+		confirmProduction:   true,
+	}
+
+	view := m.renderDetail(80)
+	checks := []string{"Safe Mode", "confirmation required", "Matched pattern: prod"}
+	for _, check := range checks {
+		if !strings.Contains(view, check) {
+			t.Fatalf("expected detail view to contain %q\n%s", check, view)
+		}
+	}
+}
+
 func TestRenderStatusBarIncludesRefresh(t *testing.T) {
 	view := Model{}.renderStatusBar()
 	if !strings.Contains(view, "r refresh") {
@@ -203,9 +223,92 @@ func TestHelpOverlayToggle(t *testing.T) {
 	}
 }
 
+func TestProductionSelectionRequiresConfirmation(t *testing.T) {
+	m := Model{
+		profiles:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		filtered:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		productionPatterns:  []string{"prod", "production", "live"},
+		confirmProduction:   true,
+	}
+
+	updated, cmd := m.handleKey(key("enter"))
+	confirmed := updated.(Model)
+	if cmd != nil {
+		t.Fatal("expected first Enter not to quit")
+	}
+	if !confirmed.confirmingSafe {
+		t.Fatal("expected production selection to require confirmation")
+	}
+	if confirmed.selected != nil {
+		t.Fatal("expected profile not to be selected yet")
+	}
+
+	updated, cmd = confirmed.handleKey(key("enter"))
+	selected := updated.(Model)
+	if cmd == nil {
+		t.Fatal("expected second Enter to quit")
+	}
+	if selected.selected == nil || selected.selected.Name != "prod-admin" {
+		t.Fatalf("expected prod-admin to be selected, got %+v", selected.selected)
+	}
+}
+
+func TestProductionSelectionCancelConfirmation(t *testing.T) {
+	m := Model{
+		profiles:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		filtered:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		productionPatterns:  []string{"prod", "production", "live"},
+		confirmProduction:   true,
+	}
+
+	updated, _ := m.handleKey(key("enter"))
+	confirmed := updated.(Model)
+
+	updated, _ = confirmed.handleKey(key("esc"))
+	cancelled := updated.(Model)
+	if cancelled.confirmingSafe {
+		t.Fatal("expected Safe Mode confirmation to cancel")
+	}
+	if cancelled.selected != nil {
+		t.Fatal("expected profile to remain unselected")
+	}
+}
+
+func TestToggleFavoritePreservesSafeModeConfig(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	t.Setenv("AWRY_CONFIG_PATH", path)
+
+	m := Model{
+		profiles:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		filtered:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		favorites:           map[string]struct{}{},
+		configPath:          path,
+		productionPatterns:  []string{"prod", "critical"},
+		confirmProduction:   false,
+	}
+
+	if err := m.toggleFavorite("prod-admin"); err != nil {
+		t.Fatalf("toggleFavorite() unexpected error: %v", err)
+	}
+
+	got, _, err := config.Load()
+	if err != nil {
+		t.Fatalf("config.Load() unexpected error: %v", err)
+	}
+
+	want := config.Config{
+		Favorites:          []string{"prod-admin"},
+		ProductionPatterns: []string{"prod", "critical"},
+		ConfirmProduction:  false,
+	}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("config.Load() = %+v, want %+v", got, want)
+	}
+}
+
 func TestRenderHelpOverlay(t *testing.T) {
 	view := Model{}.renderHelpOverlay()
-	checks := []string{"Keyboard Help", "r", "Refresh active session and identity", "Press ? or Esc to close"}
+	checks := []string{"Keyboard Help", "Enter twice", "Refresh active session and identity", "Press ? or Esc to close"}
 	for _, check := range checks {
 		if !strings.Contains(view, check) {
 			t.Fatalf("expected help overlay to contain %q\n%s", check, view)
@@ -216,6 +319,9 @@ func TestRenderHelpOverlay(t *testing.T) {
 func key(value string) tea.KeyMsg {
 	if value == "esc" {
 		return tea.KeyMsg{Type: tea.KeyEsc}
+	}
+	if value == "enter" {
+		return tea.KeyMsg{Type: tea.KeyEnter}
 	}
 	return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(value)}
 }

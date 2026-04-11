@@ -12,9 +12,11 @@ import (
 const envConfigPath = "AWRY_CONFIG_PATH"
 
 type Config struct {
-	Favorites    []string `mapstructure:"favorites"`
-	Recents      []string `mapstructure:"recents"`
-	RiskPatterns []string `mapstructure:"risk_patterns"`
+	Favorites          []string `mapstructure:"favorites"`
+	Recents            []string `mapstructure:"recents"`
+	ProductionPatterns []string `mapstructure:"production_patterns"`
+	ConfirmProduction  bool     `mapstructure:"confirm_production"`
+	RiskPatterns       []string `mapstructure:"risk_patterns"`
 }
 
 func Load() (Config, string, error) {
@@ -26,6 +28,8 @@ func Load() (Config, string, error) {
 	v := viper.New()
 	v.SetConfigFile(path)
 	v.SetConfigType("yaml")
+	v.SetDefault("production_patterns", DefaultProductionPatterns())
+	v.SetDefault("confirm_production", true)
 
 	if err := v.ReadInConfig(); err != nil {
 		var notFound viper.ConfigFileNotFoundError
@@ -37,6 +41,9 @@ func Load() (Config, string, error) {
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
 		return Config{}, "", fmt.Errorf("decoding config: %w", err)
+	}
+	if len(cfg.ProductionPatterns) == 0 && len(cfg.RiskPatterns) > 0 {
+		cfg.ProductionPatterns = append([]string(nil), cfg.RiskPatterns...)
 	}
 
 	return cfg, path, nil
@@ -52,7 +59,9 @@ func Save(cfg Config, path string) error {
 	v.SetConfigType("yaml")
 	v.Set("favorites", cfg.Favorites)
 	v.Set("recents", cfg.Recents)
-	v.Set("risk_patterns", cfg.RiskPatterns)
+	v.Set("production_patterns", cfg.ProductionPatterns)
+	v.Set("confirm_production", cfg.ConfirmProduction)
+	v.Set("risk_patterns", cfg.ProductionPatterns)
 
 	if err := v.WriteConfigAs(path); err != nil {
 		return fmt.Errorf("writing config: %w", err)
