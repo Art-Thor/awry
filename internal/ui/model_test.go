@@ -183,10 +183,10 @@ func TestRenderDetailShowsIdentityError(t *testing.T) {
 
 func TestRenderDetailShowsSafeModeBanner(t *testing.T) {
 	m := Model{
-		profiles:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
-		filtered:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
-		productionPatterns:  []string{"prod", "production", "live"},
-		confirmProduction:   true,
+		profiles:           []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		filtered:           []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		productionPatterns: []string{"prod", "production", "live"},
+		confirmProduction:  true,
 	}
 
 	view := m.renderDetail(80)
@@ -225,10 +225,10 @@ func TestHelpOverlayToggle(t *testing.T) {
 
 func TestProductionSelectionRequiresConfirmation(t *testing.T) {
 	m := Model{
-		profiles:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
-		filtered:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
-		productionPatterns:  []string{"prod", "production", "live"},
-		confirmProduction:   true,
+		profiles:           []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		filtered:           []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		productionPatterns: []string{"prod", "production", "live"},
+		confirmProduction:  true,
 	}
 
 	updated, cmd := m.handleKey(key("enter"))
@@ -255,10 +255,10 @@ func TestProductionSelectionRequiresConfirmation(t *testing.T) {
 
 func TestProductionSelectionCancelConfirmation(t *testing.T) {
 	m := Model{
-		profiles:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
-		filtered:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
-		productionPatterns:  []string{"prod", "production", "live"},
-		confirmProduction:   true,
+		profiles:           []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		filtered:           []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		productionPatterns: []string{"prod", "production", "live"},
+		confirmProduction:  true,
 	}
 
 	updated, _ := m.handleKey(key("enter"))
@@ -279,12 +279,12 @@ func TestToggleFavoritePreservesSafeModeConfig(t *testing.T) {
 	t.Setenv("AWRY_CONFIG_PATH", path)
 
 	m := Model{
-		profiles:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
-		filtered:            []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
-		favorites:           map[string]struct{}{},
-		configPath:          path,
-		productionPatterns:  []string{"prod", "critical"},
-		confirmProduction:   false,
+		profiles:           []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		filtered:           []models.Profile{{Name: "prod-admin", Type: models.ProfileTypeRole}},
+		favorites:          map[string]struct{}{},
+		configPath:         path,
+		productionPatterns: []string{"prod", "critical"},
+		confirmProduction:  false,
 	}
 
 	if err := m.toggleFavorite("prod-admin"); err != nil {
@@ -298,6 +298,7 @@ func TestToggleFavoritePreservesSafeModeConfig(t *testing.T) {
 
 	want := config.Config{
 		Favorites:          []string{"prod-admin"},
+		Recents:            []string{},
 		ProductionPatterns: []string{"prod", "critical"},
 		ConfirmProduction:  false,
 		RiskPatterns:       []string{"prod", "critical"},

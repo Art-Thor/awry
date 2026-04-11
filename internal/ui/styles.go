@@ -9,10 +9,8 @@ var (
 	colorSuccess   = lipgloss.Color("#10B981") // green
 	colorWarning   = lipgloss.Color("#F59E0B") // amber
 	colorDanger    = lipgloss.Color("#EF4444") // red
-	colorRisk      = lipgloss.Color("#FB7185") // rose
 	colorInfo      = lipgloss.Color("#3B82F6") // blue
 	colorMuted     = lipgloss.Color("#4B5563")
-	colorBg        = lipgloss.Color("#1F2937")
 	colorWhite     = lipgloss.Color("#F9FAFB")
 
 	// Panel styles
@@ -88,11 +86,6 @@ var (
 			Bold(true).
 			MarginBottom(1)
 
-	// Result message shown after selecting a profile
-	resultStyle = lipgloss.NewStyle().
-			Foreground(colorSuccess).
-			Bold(true)
-
 	// Inline badge styles for list panel
 	badgeInlineSSO = lipgloss.NewStyle().
 			Foreground(colorInfo).
@@ -113,10 +106,6 @@ var (
 	runtimeBadgeOK = lipgloss.NewStyle().
 			Foreground(colorSuccess).
 			SetString(" [READY]")
-
-	runtimeBadgeWarning = lipgloss.NewStyle().
-				Foreground(colorWarning).
-				SetString(" [SOON]")
 
 	runtimeBadgeExpiring = lipgloss.NewStyle().
 				Foreground(colorWarning).
@@ -162,18 +151,18 @@ var (
 				SetString(" [LIVE]")
 
 	safeModeBannerWarningStyle = lipgloss.NewStyle().
-				Foreground(colorWarning).
-				Bold(true).
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(colorWarning).
-				Padding(0, 1)
+					Foreground(colorWarning).
+					Bold(true).
+					Border(lipgloss.RoundedBorder()).
+					BorderForeground(colorWarning).
+					Padding(0, 1)
 
 	safeModeBannerDangerStyle = lipgloss.NewStyle().
-				Foreground(colorDanger).
-				Bold(true).
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(colorDanger).
-				Padding(0, 1)
+					Foreground(colorDanger).
+					Bold(true).
+					Border(lipgloss.RoundedBorder()).
+					BorderForeground(colorDanger).
+					Padding(0, 1)
 
 	safeModeBannerNoteStyle = lipgloss.NewStyle().
 				Foreground(colorSecondary)
