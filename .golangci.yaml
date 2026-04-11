@@ -32,10 +32,5 @@ linters-settings:
     require-specific: true
 
 issues:
-  exclude-use-case: should
   max-issues-per-linter: 0
   max-same-issues: 0
-
-output:
-  format: github
-  print-issued-line: false

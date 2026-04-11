@@ -28,7 +28,6 @@ func Load() (Config, string, error) {
 	v := viper.New()
 	v.SetConfigFile(path)
 	v.SetConfigType("yaml")
-	v.SetDefault("production_patterns", DefaultProductionPatterns())
 	v.SetDefault("confirm_production", true)
 
 	if err := v.ReadInConfig(); err != nil {
@@ -42,8 +41,12 @@ func Load() (Config, string, error) {
 	if err := v.Unmarshal(&cfg); err != nil {
 		return Config{}, "", fmt.Errorf("decoding config: %w", err)
 	}
-	if len(cfg.ProductionPatterns) == 0 && len(cfg.RiskPatterns) > 0 {
-		cfg.ProductionPatterns = append([]string(nil), cfg.RiskPatterns...)
+	if !v.IsSet("production_patterns") {
+		if len(cfg.RiskPatterns) > 0 {
+			cfg.ProductionPatterns = append([]string(nil), cfg.RiskPatterns...)
+		} else {
+			cfg.ProductionPatterns = DefaultProductionPatterns()
+		}
 	}
 
 	return cfg, path, nil
