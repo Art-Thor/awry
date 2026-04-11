@@ -73,6 +73,28 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	if m.confirmingSafe {
+		switch msg.String() {
+		case "enter", "y":
+			if len(m.filtered) == 0 {
+				m.confirmingSafe = false
+				return m, nil
+			}
+
+			p := m.filtered[m.cursor]
+			m.selectProfile(p)
+			return m, tea.Quit
+		case "esc", "n":
+			m.confirmingSafe = false
+			return m, nil
+		case "q", "ctrl+c":
+			m.quitting = true
+			return m, tea.Quit
+		default:
+			return m, nil
+		}
+	}
+
 	if m.searching {
 		switch msg.Type {
 		case tea.KeyEsc:
@@ -100,6 +122,9 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg.String() {
+	case "esc":
+		m.confirmingSafe = false
+		return m, nil
 	case "q", "ctrl+c":
 		m.quitting = true
 		return m, tea.Quit
@@ -121,21 +146,28 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case "up", "k":
+		m.confirmingSafe = false
 		if m.cursor > 0 {
 			m.cursor--
 		}
 	case "down", "j":
+		m.confirmingSafe = false
 		if m.cursor < len(m.filtered)-1 {
 			m.cursor++
 		}
 	case "/":
+		m.confirmingSafe = false
 		m.searching = true
 		m.searchQuery = ""
 	case "enter":
 		if len(m.filtered) > 0 {
 			p := m.filtered[m.cursor]
-			_ = m.recordRecent(p.Name)
-			m.selected = &p
+			if m.requiresProductionConfirmation(p) {
+				m.confirmSelection(p)
+				return m, nil
+			}
+
+			m.selectProfile(p)
 			return m, tea.Quit
 		}
 	}

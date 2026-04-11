@@ -151,6 +151,33 @@ var (
 				Foreground(colorSecondary).
 				SetString(" [INFO]")
 
+	safeModeBadgeWarning = lipgloss.NewStyle().
+				Foreground(colorWarning).
+				Bold(true).
+				SetString(" [PROD]")
+
+	safeModeBadgeDanger = lipgloss.NewStyle().
+				Foreground(colorDanger).
+				Bold(true).
+				SetString(" [LIVE]")
+
+	safeModeBannerWarningStyle = lipgloss.NewStyle().
+				Foreground(colorWarning).
+				Bold(true).
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(colorWarning).
+				Padding(0, 1)
+
+	safeModeBannerDangerStyle = lipgloss.NewStyle().
+				Foreground(colorDanger).
+				Bold(true).
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(colorDanger).
+				Padding(0, 1)
+
+	safeModeBannerNoteStyle = lipgloss.NewStyle().
+				Foreground(colorSecondary)
+
 	helpBoxStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(colorMuted).

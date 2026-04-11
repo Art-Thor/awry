@@ -1,0 +1,16 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - gosimple
+    - ineffassign
+    - staticcheck
+    - copyloopvar
+    - errname
+    - unconvert
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

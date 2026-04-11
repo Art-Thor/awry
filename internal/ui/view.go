@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -9,7 +10,6 @@ import (
 
 	"github.com/Art-Thor/awry/pkg/models"
 	"github.com/Art-Thor/awry/pkg/shellenv"
-	"os"
 )
 
 // inlineBadge returns the inline type badge string for a profile.
@@ -108,7 +108,7 @@ func (m Model) renderList(width int) string {
 		}
 
 		p := m.filtered[i]
-		name := riskMarker(m.isRiskyProfile(p.Name)) + recentMarker(m.isRecent(p.Name)) + favoriteMarker(m.isFavorite(p.Name)) + p.Name + inlineBadge(p.Type) + m.listHealthBadge(p)
+		name := recentMarker(m.isRecent(p.Name)) + favoriteMarker(m.isFavorite(p.Name)) + p.Name + inlineBadge(p.Type) + m.safeModeListBadge(p) + m.listHealthBadge(p)
 
 		isActive := p.Name == m.currentProfile
 		if isActive {
@@ -180,12 +180,16 @@ func (m Model) renderDetail(width int) string {
 	p := m.filtered[m.cursor]
 
 	var b strings.Builder
+	if banner := m.safeModeBanner(p); banner != "" {
+		b.WriteString(banner)
+		b.WriteString("\n\n")
+	}
 
 	b.WriteString(detailTitleStyle.Render(p.Name))
 	b.WriteString("\n\n")
+	b.WriteString(row("Safe Mode", m.safeModeValue(p)))
 	b.WriteString(row("Favorite", yesNo(m.isFavorite(p.Name))))
 	b.WriteString(row("Recent", yesNo(m.isRecent(p.Name))))
-	b.WriteString(row("Risk", m.riskLabel(p.Name)))
 	b.WriteString(row("Type", badgeFor(p.Type)))
 	b.WriteString(row("Health", m.profileHealthValue(p)))
 	b.WriteString(row("Region", p.DisplayRegion()))
@@ -232,6 +236,7 @@ func (m Model) renderHelpOverlay() string {
 		"",
 		helpKeyStyle.Render("j / k, up / down") + helpDescStyle.Render("Move through profiles"),
 		helpKeyStyle.Render("Enter") + helpDescStyle.Render("Select the highlighted profile"),
+		helpKeyStyle.Render("Enter twice") + helpDescStyle.Render("Confirm switching a production-like profile"),
 		helpKeyStyle.Render("p") + helpDescStyle.Render("Toggle favorite on the highlighted profile"),
 		helpKeyStyle.Render("/") + helpDescStyle.Render("Start fuzzy search"),
 		helpKeyStyle.Render("r") + helpDescStyle.Render("Refresh active session and identity"),
@@ -284,6 +289,8 @@ func (m Model) renderStatusBar() string {
 	var parts []string
 	if m.searching {
 		parts = append(parts, "Esc close search", "Enter confirm")
+	} else if m.confirmingSafe {
+		parts = append(parts, "Enter confirm production", "Esc cancel", "q quit")
 	} else {
 		parts = append(parts, "↑↓/jk navigate", "Enter select profile", "p favorite", "r refresh", "? help", "/ search", "q quit")
 	}
@@ -293,13 +300,6 @@ func (m Model) renderStatusBar() string {
 func recentMarker(isRecent bool) string {
 	if isRecent {
 		return "> "
-	}
-	return "  "
-}
-
-func riskMarker(isRisky bool) string {
-	if isRisky {
-		return "! "
 	}
 	return "  "
 }

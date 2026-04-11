@@ -18,6 +18,7 @@ Browse, inspect, and switch AWS profiles without leaving your terminal.
 - **Active profile highlight** — shows which profile is currently set
 - **Favorites** — press `p` in the TUI to pin frequently used profiles near the top
 - **Recents** — recently selected profiles stay close at hand automatically
+- **Safe Mode** — warns on production-like profiles and asks for confirmation before switching
 - **Shell integration** — install a shell wrapper for bash, zsh, or fish so `awry` updates your current shell
 - **Identity and session details** — see who you are and how long the active session has left
 
@@ -208,6 +209,7 @@ command awry list
 |-----|--------|
 | `↑` `↓` / `j` `k` | Navigate profiles |
 | `Enter` | Select profile |
+| `Enter` twice | Confirm switching a production-like profile |
 | `p` | Toggle favorite |
 | `r` | Refresh session and identity |
 | `?` | Open keyboard help |
@@ -442,6 +444,21 @@ Right now that config file is used for:
 
 - favorites
 - recent profiles
+- Safe Mode settings
+
+Example:
+
+```yaml
+favorites:
+  - sandbox-admin
+recents:
+  - prod-admin
+production_patterns:
+  - prod
+  - production
+  - live
+confirm_production: true
+```
 
 awry respects these environment variables:
 

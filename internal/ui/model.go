@@ -27,6 +27,7 @@ type Model struct {
 	searchQuery        string
 	searching          bool
 	selected           *models.Profile
+	confirmingSafe     bool
 	width              int
 	height             int
 	quitting           bool
@@ -37,8 +38,9 @@ type Model struct {
 	sessionErr         error
 	favorites          map[string]struct{}
 	recents            []string
-	configRiskPatterns []string
 	configPath         string
+	productionPatterns []string
+	confirmProduction  bool
 }
 
 // SelectedProfile returns the profile the user chose (nil if none).
@@ -64,11 +66,12 @@ func New() (Model, error) {
 		return Model{}, fmt.Errorf("loading config: %w", err)
 	}
 	m.configPath = path
+	m.productionPatterns = append([]string(nil), cfg.ProductionPatterns...)
+	m.confirmProduction = cfg.ConfirmProduction
 	for _, favorite := range cfg.Favorites {
 		m.favorites[favorite] = struct{}{}
 	}
 	m.recents = append([]string(nil), cfg.Recents...)
-	m.configRiskPatterns = append([]string(nil), cfg.RiskPatterns...)
 
 	m.pinActiveToTop()
 	m.pinFavoritesAfterActive()
@@ -146,7 +149,13 @@ func (m Model) saveConfig() error {
 	}
 	sort.Strings(keys)
 
-	return config.Save(config.Config{Favorites: keys, Recents: m.recents}, m.configPath)
+	return config.Save(config.Config{
+		Favorites:          keys,
+		Recents:            m.recents,
+		ProductionPatterns: append([]string(nil), m.productionPatterns...),
+		ConfirmProduction:  m.confirmProduction,
+		RiskPatterns:       append([]string(nil), m.productionPatterns...),
+	}, m.configPath)
 }
 
 func (m *Model) restoreCursor(profileName string) {
